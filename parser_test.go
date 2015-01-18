@@ -1,6 +1,10 @@
 package nmea
 
-import "testing"
+import (
+	"encoding/json"
+	"strings"
+	"testing"
+)
 
 func TestChecksum(t *testing.T) {
 	tests := map[string]bool{
@@ -12,5 +16,27 @@ func TestChecksum(t *testing.T) {
 		if checkChecksum(in) != exp {
 			t.Errorf("Failed on %v/%v", in, exp)
 		}
+	}
+}
+
+func TestSampleParsing(t *testing.T) {
+	for _, s := range strings.Split(ubloxSample, "\n") {
+		parseMessage(s, nil)
+	}
+}
+
+type rmcHandler struct{ t *testing.T }
+
+func (r rmcHandler) HandleRMC(rmc RMC) {
+	j, err := json.Marshal(rmc)
+	if err != nil {
+		panic(err)
+	}
+	r.t.Logf("%s", j)
+}
+
+func TestRMCHandling(t *testing.T) {
+	for _, s := range strings.Split(ubloxSample, "\n") {
+		parseMessage(s, rmcHandler{t})
 	}
 }
