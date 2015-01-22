@@ -32,18 +32,26 @@ func TestSampleParsing(t *testing.T) {
 	}
 }
 
-type rmcHandler struct{ t *testing.T }
+type rmcHandler struct {
+	rmc RMC
+}
 
-func (r rmcHandler) HandleRMC(rmc RMC) {
-	j, err := json.Marshal(rmc)
+func (r *rmcHandler) HandleRMC(rmc RMC) {
+	r.rmc = rmc
+}
+
+func logJSON(t *testing.T, h interface{}) {
+	j, err := json.Marshal(h)
 	if err != nil {
-		panic(err)
+		t.Errorf("Failed to marshal %v: %v", h, err)
 	}
-	r.t.Logf("%s", j)
+	t.Logf("%T: %s", h, j)
 }
 
 func TestRMCHandling(t *testing.T) {
+	h := &rmcHandler{}
 	for _, s := range strings.Split(ubloxSample, "\n") {
-		parseMessage(s, rmcHandler{t})
+		parseMessage(s, h)
 	}
+	logJSON(t, h.rmc)
 }
