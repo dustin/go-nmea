@@ -2,8 +2,11 @@ package nmea
 
 import (
 	"encoding/json"
+	"math"
+	"reflect"
 	"strings"
 	"testing"
+	"time"
 )
 
 func TestChecksum(t *testing.T) {
@@ -48,10 +51,74 @@ func logJSON(t *testing.T, h interface{}) {
 	t.Logf("%T: %s", h, j)
 }
 
+const ε = 0.00001
+
+func near(a, b float64) bool {
+	return math.Abs(a-b) < ε
+}
+
+func similar(t *testing.T, a, b interface{}) bool {
+	ta := reflect.TypeOf(a)
+	tb := reflect.TypeOf(b)
+	if ta != tb {
+		t.Errorf("Expected same type between %v and %v", ta, tb)
+		return false
+	}
+	va := reflect.ValueOf(a)
+	vb := reflect.ValueOf(b)
+
+	for i := 0; i < ta.NumField(); i++ {
+		f := ta.Field(i)
+		name := f.Name
+		af := va.Field(i)
+		bf := vb.Field(i)
+		if af.Type() != bf.Type() {
+			t.Errorf("Incorrect type in field %v: %T != %T", name, af.Type(), bf.Type())
+			return false
+		}
+		av := af.Interface()
+		bv := bf.Interface()
+
+		switch av.(type) {
+		case time.Time:
+			if !av.(time.Time).Equal(bv.(time.Time)) {
+				t.Errorf("Timestamp field %v was off: %v vs. %v", name, av, bv)
+				return false
+			}
+		case rune:
+			if av.(rune) != bv.(rune) {
+				t.Errorf("rune field %v was wrong: %c != %c", name, av, bv)
+				return false
+			}
+		case float64:
+			if !near(av.(float64), bv.(float64)) {
+				t.Errorf("Not close enough on field %v: %v vs. %v", name, av, bv)
+				return false
+			}
+		default:
+			t.Errorf("Unhandled field type: %T in field %v", av, name)
+			return false
+		}
+	}
+
+	return true
+}
+
 func TestRMCHandling(t *testing.T) {
 	h := &rmcHandler{}
 	for _, s := range strings.Split(ubloxSample, "\n") {
 		parseMessage(s, h)
 	}
-	logJSON(t, h.rmc)
+	exp := RMC{
+		Timestamp: time.Unix(1152634974, 0).UTC(),
+		Status:    'A',
+		Latitude:  37.383806166666666,
+		Longitude: -121.9899755,
+		Speed:     0.82,
+		Angle:     188.36,
+		Magvar:    0,
+	}
+	if !similar(t, h.rmc, exp) {
+		t.Errorf("Expected more similarity between %#v and (wanted) %#v", h.rmc, exp)
+	}
 }
