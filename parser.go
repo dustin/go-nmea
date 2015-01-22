@@ -136,7 +136,6 @@ func parseMessage(line string, handler interface{}) {
 	}
 
 	parts := strings.Split(line[:len(line)-3], ",")
-	log.Printf("Parsed %v", parts)
 
 	if p, ok := parsers[parts[0]]; ok {
 		if err := p(parts, handler); err != nil {
