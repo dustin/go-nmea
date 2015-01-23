@@ -2,6 +2,7 @@ package nmea
 
 import (
 	"errors"
+	"fmt"
 	"log"
 	"strconv"
 	"strings"
@@ -12,6 +13,7 @@ var notHandled = errors.New("not handled")
 
 var parsers = map[string]func([]string, interface{}) error{
 	"$GPRMC": rmcParser,
+	"$GPVTG": vtgParser,
 }
 
 type cumulativeFloatParser struct {
@@ -19,6 +21,9 @@ type cumulativeFloatParser struct {
 }
 
 func (c *cumulativeFloatParser) parse(s string) float64 {
+	if s == "" {
+		return 0
+	}
 	rv, err := strconv.ParseFloat(s, 64)
 	if err != nil {
 		c.err = err
@@ -101,6 +106,46 @@ func rmcParser(parts []string, handler interface{}) error {
 		Angle:     angle,
 		Magvar:    magvar,
 	})
+
+	return nil
+}
+
+/*
+VTG - Velocity made good. The gps receiver may use the LC prefix
+instead of GP if it is emulating Loran output.
+
+  $GPVTG,054.7,T,034.4,M,005.5,N,010.2,K*48
+
+where:
+        // 0:    VTG          Track made good and ground speed
+        // 1,2:  054.7,T      True track made good (degrees)
+        // 3,4:  034.4,M      Magnetic track made good
+        // 5,6:  005.5,N      Ground speed, knots
+        // 7,8:  010.2,K      Ground speed, Kilometers per hour
+*/
+func vtgParser(parts []string, handler interface{}) error {
+	h, ok := handler.(VTGHandler)
+	if !ok {
+		return notHandled
+	}
+
+	if parts[2] != "T" || parts[4] != "M" || parts[6] != "N" || parts[8] != "K" {
+		return fmt.Errorf("Unexpected VTG packet: %#v", parts)
+	}
+
+	cp := &cumulativeFloatParser{}
+	vtg := VTG{
+		True:     cp.parse(parts[1]),
+		Magnetic: cp.parse(parts[3]),
+		Knots:    cp.parse(parts[5]),
+		KMH:      cp.parse(parts[7]),
+	}
+
+	if cp.err != nil {
+		return cp.err
+	}
+
+	h.HandleVTG(vtg)
 
 	return nil
 }

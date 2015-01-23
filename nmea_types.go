@@ -208,6 +208,8 @@ type VBWHandler interface {
 
 // VTG represents a Vector track an Speed over the Ground message.
 type VTG struct {
+	True, Magnetic float64
+	Knots, KMH     float64
 }
 
 // A VTGHandler handles VTG messages from a stream.

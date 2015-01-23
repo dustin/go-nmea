@@ -122,3 +122,27 @@ func TestRMCHandling(t *testing.T) {
 		t.Errorf("Expected more similarity between %#v and (wanted) %#v", h.rmc, exp)
 	}
 }
+
+type vtgHandler struct {
+	vtg VTG
+}
+
+func (r *vtgHandler) HandleVTG(vtg VTG) {
+	r.vtg = vtg
+}
+
+func TestVTGHandling(t *testing.T) {
+	h := &vtgHandler{}
+	for _, s := range strings.Split(ubloxSample, "\n") {
+		parseMessage(s, h)
+	}
+	exp := VTG{
+		True:     188.36,
+		Magnetic: 0,
+		Knots:    0.82,
+		KMH:      1.519,
+	}
+	if !similar(t, h.vtg, exp) {
+		t.Errorf("Expected more similarity between %#v and (wanted) %#v", h.vtg, exp)
+	}
+}
