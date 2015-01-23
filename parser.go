@@ -14,6 +14,18 @@ var parsers = map[string]func([]string, interface{}) error{
 	"$GPRMC": rmcParser,
 }
 
+type cumulativeFloatParser struct {
+	err error
+}
+
+func (c *cumulativeFloatParser) parse(s string) float64 {
+	rv, err := strconv.ParseFloat(s, 64)
+	if err != nil {
+		c.err = err
+	}
+	return rv
+}
+
 func parseDMS(s, ref string) (float64, error) {
 	n := 2
 	m := 1.0
@@ -24,18 +36,13 @@ func parseDMS(s, ref string) (float64, error) {
 		m = -1
 	}
 
-	deg, err := strconv.ParseFloat(s[:n], 64)
-	if err != nil {
-		return 0, err
-	}
-	min, err := strconv.ParseFloat(s[n:], 64)
-	if err != nil {
-		return 0, err
-	}
+	cp := &cumulativeFloatParser{}
+	deg := cp.parse(s[:n])
+	min := cp.parse(s[n:])
 	deg += (min / 60.0)
 	deg *= m
 
-	return deg, nil
+	return deg, cp.err
 }
 
 /*
@@ -69,23 +76,20 @@ func rmcParser(parts []string, handler interface{}) error {
 		return err
 	}
 
-	speed, err := strconv.ParseFloat(parts[7], 64)
-	if err != nil {
-		return err
-	}
-	angle, err := strconv.ParseFloat(parts[8], 64)
-	if err != nil {
-		return err
-	}
+	cp := &cumulativeFloatParser{}
+
+	speed := cp.parse(parts[7])
+	angle := cp.parse(parts[8])
 	magvar := 0.0
 	if parts[10] != "" {
-		magvar, err = strconv.ParseFloat(parts[10], 64)
-		if err != nil {
-			return err
-		}
+		magvar = cp.parse(parts[10])
 		if parts[11] == "W" {
 			magvar *= -1
 		}
+	}
+
+	if cp.err != nil {
+		return cp.err
 	}
 
 	h.HandleRMC(RMC{
