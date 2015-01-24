@@ -95,6 +95,16 @@ func similar(t *testing.T, a, b interface{}) bool {
 				t.Errorf("Not close enough on field %v: %v vs. %v", name, av, bv)
 				return false
 			}
+		case int:
+			if av.(int) != bv.(int) {
+				t.Errorf("int field %v was wrong: %v != %v", name, av, bv)
+				return false
+			}
+		case FixQuality:
+			if av.(FixQuality) != bv.(FixQuality) {
+				t.Errorf("FixQuality field %v was wrong: %v != %v", name, av, bv)
+				return false
+			}
 		default:
 			t.Errorf("Unhandled field type: %T in field %v", av, name)
 			return false
@@ -144,5 +154,33 @@ func TestVTGHandling(t *testing.T) {
 	}
 	if !similar(t, h.vtg, exp) {
 		t.Errorf("Expected more similarity between %#v and (wanted) %#v", h.vtg, exp)
+	}
+}
+
+type ggaHandler struct {
+	gga GGA
+}
+
+func (g *ggaHandler) HandleGGA(gga GGA) {
+	g.gga = gga
+}
+
+func TestGGAHandling(t *testing.T) {
+	h := &ggaHandler{}
+	for _, s := range strings.Split(ubloxSample, "\n") {
+		parseMessage(s, h)
+	}
+	exp := GGA{
+		Taken:              time.Date(0, 1, 1, 16, 22, 54, 0, time.UTC),
+		Latitude:           37.383806166666666,
+		Longitude:          -121.9899755,
+		Quality:            GPSFix,
+		NumSats:            3,
+		HorizontalDilution: 2.36,
+		Altitude:           525.6,
+		GeoidHeight:        -25.6,
+	}
+	if !similar(t, h.gga, exp) {
+		t.Errorf("Expected more similarity between %#v and (wanted) %#v", h.gga, exp)
 	}
 }

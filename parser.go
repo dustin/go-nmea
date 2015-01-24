@@ -14,6 +14,7 @@ var notHandled = errors.New("not handled")
 var parsers = map[string]func([]string, interface{}) error{
 	"$GPRMC": rmcParser,
 	"$GPVTG": vtgParser,
+	"$GPGGA": ggaParser,
 }
 
 type cumulativeFloatParser struct {
@@ -29,6 +30,17 @@ func (c *cumulativeFloatParser) parse(s string) float64 {
 		c.err = err
 	}
 	return rv
+}
+
+func (c *cumulativeFloatParser) parseInt(s string) int {
+	if s == "" {
+		return 0
+	}
+	rv, err := strconv.ParseInt(s, 10, 64)
+	if err != nil {
+		c.err = err
+	}
+	return int(rv)
 }
 
 func parseDMS(s, ref string) (float64, error) {
@@ -148,6 +160,71 @@ func vtgParser(parts []string, handler interface{}) error {
 	h.HandleVTG(vtg)
 
 	return nil
+}
+
+/*
+ $GPGGA,123519,4807.038,N,01131.000,E,1,08,0.9,545.4,M,46.9,M,,*47
+
+Where:
+     1:    123519       Fix taken at 12:35:19 UTC
+     2,3:  4807.038,N   Latitude 48 deg 07.038' N
+     4,5:  01131.000,E  Longitude 11 deg 31.000' E
+     6:    1            Fix quality: 0 = invalid
+                               1 = GPS fix (SPS)
+                               2 = DGPS fix
+                               3 = PPS fix
+			       4 = Real Time Kinematic
+			       5 = Float RTK
+                               6 = estimated (dead reckoning) (2.3 feature)
+			       7 = Manual input mode
+			       8 = Simulation mode
+     7:     08           Number of satellites being tracked
+     8:     0.9          Horizontal dilution of position
+     9,10:  545.4,M      Altitude, Meters, above mean sea level
+     11,12: 46.9,M       Height of geoid (mean sea level) above WGS84
+                      ellipsoid
+     (empty field) time in seconds since last DGPS update
+     (empty field) DGPS station ID number
+     *47          the checksum data, always begins with *
+
+*/
+func ggaParser(parts []string, handler interface{}) error {
+	h, ok := handler.(GGAHandler)
+	if !ok {
+		return notHandled
+	}
+
+	if len(parts) < 13 || parts[10] != "M" || parts[12] != "M" {
+		return fmt.Errorf("Unexpected GGA packet: %#v", parts)
+	}
+
+	t, err := time.Parse("150405 UTC", parts[1]+" UTC")
+	if err != nil {
+		return err
+	}
+
+	lat, err := parseDMS(parts[2], parts[3])
+	if err != nil {
+		return err
+	}
+	lon, err := parseDMS(parts[4], parts[5])
+	if err != nil {
+		return err
+	}
+
+	cp := &cumulativeFloatParser{}
+	h.HandleGGA(GGA{
+		Taken:              t,
+		Latitude:           lat,
+		Longitude:          lon,
+		Quality:            FixQuality(cp.parseInt(parts[6])),
+		HorizontalDilution: cp.parse(parts[8]),
+		NumSats:            cp.parseInt(parts[7]),
+		Altitude:           cp.parse(parts[9]),
+		GeoidHeight:        cp.parse(parts[11]),
+	})
+
+	return cp.err
 }
 
 func checkChecksum(line string) bool {

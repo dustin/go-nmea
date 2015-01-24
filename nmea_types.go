@@ -72,8 +72,30 @@ type DTMHandler interface {
 	HandleDTM(DTM)
 }
 
+// FixQuality represents the quality of a position fix in a GGA packet.
+type FixQuality int
+
+const (
+	InvalidFix = iota
+	GPSFix
+	DGPSFix
+	PPSFix
+	RealTimeKinematicFix
+	FloatRealTimeKinematicFix
+	EstimatedFix
+	ManualInputModeFix
+	SimulationModeFix
+)
+
 // GGA represents a Fix information message.
 type GGA struct {
+	Taken               time.Time
+	Latitude, Longitude float64
+	Quality             FixQuality
+	NumSats             int
+	HorizontalDilution  float64
+	Altitude            float64
+	GeoidHeight         float64
 }
 
 // A GGAHandler handles GGA messages from a stream.
