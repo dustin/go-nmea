@@ -76,7 +76,7 @@ type DTMHandler interface {
 type FixQuality int
 
 const (
-	InvalidFix = iota
+	InvalidFix = FixQuality(iota)
 	GPSFix
 	DGPSFix
 	PPSFix
@@ -86,6 +86,22 @@ const (
 	ManualInputModeFix
 	SimulationModeFix
 )
+
+var fixNames = []string{
+	InvalidFix:                "invalid fix",
+	GPSFix:                    "gps",
+	DGPSFix:                   "dgps",
+	PPSFix:                    "pps",
+	RealTimeKinematicFix:      "rt kinematic",
+	FloatRealTimeKinematicFix: "float rt kinematic",
+	EstimatedFix:              "estimated",
+	ManualInputModeFix:        "manual mode",
+	SimulationModeFix:         "sim mode",
+}
+
+func (q FixQuality) String() string {
+	return fixNames[q]
+}
 
 // GGA represents a Fix information message.
 type GGA struct {

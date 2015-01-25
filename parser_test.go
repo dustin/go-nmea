@@ -2,6 +2,7 @@ package nmea
 
 import (
 	"encoding/json"
+	"fmt"
 	"math"
 	"reflect"
 	"strings"
@@ -163,6 +164,13 @@ type ggaHandler struct {
 
 func (g *ggaHandler) HandleGGA(gga GGA) {
 	g.gga = gga
+}
+
+func TestFixQualityStringing(t *testing.T) {
+	got := fmt.Sprint(FloatRealTimeKinematicFix)
+	if got != "float rt kinematic" {
+		t.Errorf("Incorrect value for FloatRealTimeKinematicFix: %v", got)
+	}
 }
 
 func TestGGAHandling(t *testing.T) {
