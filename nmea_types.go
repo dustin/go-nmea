@@ -138,9 +138,25 @@ type GRSHandler interface {
 	HandleGRS(GRS)
 }
 
+type GSAFix int
+
+const (
+	_ = GSAFix(iota)
+	NoFix
+	Fix2D
+	Fix3D
+)
+
+func (g GSAFix) String() string {
+	return []string{"", "no fix", "2D fix", "3D fix"}[g]
+}
+
 // GSA represents a Overall Satellite data message.
 type GSA struct {
-	// TODO
+	Auto             bool
+	Fix              GSAFix
+	SatsUsed         []int
+	PDOP, HDOP, VDOP float64
 }
 
 // A GSAHandler handles GSA messages from a stream.

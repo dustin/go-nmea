@@ -15,6 +15,7 @@ var parsers = map[string]func([]string, interface{}) error{
 	"$GPRMC": rmcParser,
 	"$GPVTG": vtgParser,
 	"$GPGGA": ggaParser,
+	"$GPGSA": gsaParser,
 }
 
 type cumulativeFloatParser struct {
@@ -222,6 +223,49 @@ func ggaParser(parts []string, handler interface{}) error {
 		NumSats:            cp.parseInt(parts[7]),
 		Altitude:           cp.parse(parts[9]),
 		GeoidHeight:        cp.parse(parts[11]),
+	})
+
+	return cp.err
+}
+
+/*
+  $GPGSA,A,3,04,05,,09,12,,,24,,,,,2.5,1.3,2.1*39
+
+Where:
+     1. A        Auto selection of 2D or 3D fix (M = manual)
+     2. 3        3D fix - values include: 1 = no fix
+                                       2 = 2D fix
+                                       3 = 3D fix
+     3-15.  04,05... PRNs of satellites used for fix (space for 12)
+     15.    2.5      PDOP (dilution of precision)
+     16. 1.3      Horizontal dilution of precision (HDOP)
+     17. 2.1      Vertical dilution of precision (VDOP)
+*/
+func gsaParser(parts []string, handler interface{}) error {
+	h, ok := handler.(GSAHandler)
+	if !ok {
+		return notHandled
+	}
+
+	if len(parts) != 18 {
+		return fmt.Errorf("Unexpected GSA packet: %#v (len=%v)", parts, len(parts))
+	}
+
+	cp := &cumulativeFloatParser{}
+	sats := []int{}
+	for _, s := range parts[3:15] {
+		if s != "" {
+			sats = append(sats, cp.parseInt(s))
+		}
+	}
+
+	h.HandleGSA(GSA{
+		Auto:     parts[1] == "A",
+		Fix:      GSAFix(cp.parseInt(parts[2])),
+		SatsUsed: sats,
+		PDOP:     cp.parse(parts[15]),
+		HDOP:     cp.parse(parts[16]),
+		VDOP:     cp.parse(parts[17]),
 	})
 
 	return cp.err

@@ -101,9 +101,24 @@ func similar(t *testing.T, a, b interface{}) bool {
 				t.Errorf("int field %v was wrong: %v != %v", name, av, bv)
 				return false
 			}
+		case bool:
+			if av.(bool) != bv.(bool) {
+				t.Errorf("bool field %v was wrong: %v != %v", name, av, bv)
+				return false
+			}
 		case FixQuality:
 			if av.(FixQuality) != bv.(FixQuality) {
 				t.Errorf("FixQuality field %v was wrong: %v != %v", name, av, bv)
+				return false
+			}
+		case GSAFix:
+			if av.(GSAFix) != bv.(GSAFix) {
+				t.Errorf("GSAFix field %v was wrong: %v != %v", name, av, bv)
+				return false
+			}
+		case []int:
+			if !reflect.DeepEqual(av, bv) {
+				t.Errorf("[]int field %v was wrong: %v != %v", name, av, bv)
 				return false
 			}
 		default:
@@ -190,5 +205,31 @@ func TestGGAHandling(t *testing.T) {
 	}
 	if !similar(t, h.gga, exp) {
 		t.Errorf("Expected more similarity between %#v and (wanted) %#v", h.gga, exp)
+	}
+}
+
+type gsaHandler struct {
+	gsa GSA
+}
+
+func (g *gsaHandler) HandleGSA(gsa GSA) {
+	g.gsa = gsa
+}
+
+func TestGSAHandling(t *testing.T) {
+	h := &gsaHandler{}
+	for _, s := range strings.Split(ubloxSample, "\n") {
+		parseMessage(s, h)
+	}
+	exp := GSA{
+		Auto:     true,
+		Fix:      Fix2D,
+		SatsUsed: []int{25, 1, 22},
+		PDOP:     2.56,
+		HDOP:     2.36,
+		VDOP:     1,
+	}
+	if !similar(t, h.gsa, exp) {
+		t.Errorf("Expected more similarity between %#v and (wanted) %#v", h.gsa, exp)
 	}
 }
