@@ -96,34 +96,11 @@ func similar(t *testing.T, a, b interface{}) bool {
 				t.Errorf("Not close enough on field %v: %v vs. %v", name, av, bv)
 				return false
 			}
-		case int:
-			if av.(int) != bv.(int) {
-				t.Errorf("int field %v was wrong: %v != %v", name, av, bv)
-				return false
-			}
-		case bool:
-			if av.(bool) != bv.(bool) {
-				t.Errorf("bool field %v was wrong: %v != %v", name, av, bv)
-				return false
-			}
-		case FixQuality:
-			if av.(FixQuality) != bv.(FixQuality) {
-				t.Errorf("FixQuality field %v was wrong: %v != %v", name, av, bv)
-				return false
-			}
-		case GSAFix:
-			if av.(GSAFix) != bv.(GSAFix) {
-				t.Errorf("GSAFix field %v was wrong: %v != %v", name, av, bv)
-				return false
-			}
-		case []int:
-			if !reflect.DeepEqual(av, bv) {
-				t.Errorf("[]int field %v was wrong: %v != %v", name, av, bv)
-				return false
-			}
 		default:
-			t.Errorf("Unhandled field type: %T in field %v", av, name)
-			return false
+			if !reflect.DeepEqual(av, bv) {
+				t.Errorf("%T field %v was wrong: %v != %v", av, name, av, bv)
+				return false
+			}
 		}
 	}
 
