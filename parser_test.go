@@ -210,3 +210,27 @@ func TestGSAHandling(t *testing.T) {
 		t.Errorf("Expected more similarity between %#v and (wanted) %#v", h.gsa, exp)
 	}
 }
+
+type gllHandler struct {
+	gll GLL
+}
+
+func (g *gllHandler) HandleGLL(gll GLL) {
+	g.gll = gll
+}
+
+func TestGLLHandling(t *testing.T) {
+	h := &gllHandler{}
+	for _, s := range strings.Split(ubloxSample, "\n") {
+		parseMessage(s, h)
+	}
+	exp := GLL{
+		Latitude:  37.383806166666666,
+		Longitude: -121.9899755,
+		Active:    true,
+		Taken:     time.Date(0, 1, 1, 16, 22, 54, 0, time.UTC),
+	}
+	if !similar(t, h.gll, exp) {
+		t.Errorf("Expected more similarity between %#v and (wanted) %#v", h.gll, exp)
+	}
+}

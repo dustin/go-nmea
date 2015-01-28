@@ -16,6 +16,7 @@ var parsers = map[string]func([]string, interface{}) error{
 	"$GPVTG": vtgParser,
 	"$GPGGA": ggaParser,
 	"$GPGSA": gsaParser,
+	"$GPGLL": gllParser,
 }
 
 type cumulativeFloatParser struct {
@@ -269,6 +270,45 @@ func gsaParser(parts []string, handler interface{}) error {
 	})
 
 	return cp.err
+}
+
+/*
+  $GPGLL,4916.45,N,12311.12,W,225444,A,*1D
+
+Where:
+     0,   GLL          Geographic position, Latitude and Longitude
+     1,2: 4916.46,N    Latitude 49 deg. 16.45 min. North
+     3,4: 12311.12,W   Longitude 123 deg. 11.12 min. West
+     5:   225444       Fix taken at 22:54:44 UTC
+     6:   A            Data Active or V (void)
+*/
+func gllParser(parts []string, handler interface{}) error {
+	h, ok := handler.(GLLHandler)
+	if !ok {
+		return notHandled
+	}
+
+	lat, err := parseDMS(parts[1], parts[2])
+	if err != nil {
+		return err
+	}
+	lon, err := parseDMS(parts[3], parts[4])
+	if err != nil {
+		return err
+	}
+
+	t, err := time.Parse("150405 UTC", parts[5]+" UTC")
+	if err != nil {
+		return err
+	}
+
+	h.HandleGLL(GLL{
+		Taken:     t,
+		Latitude:  lat,
+		Longitude: lon,
+		Active:    parts[6] == "A",
+	})
+	return nil
 }
 
 func checkChecksum(line string) bool {

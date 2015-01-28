@@ -121,6 +121,9 @@ type GGAHandler interface {
 
 // GLL represents a Lat/Lon data message.
 type GLL struct {
+	Latitude, Longitude float64
+	Taken               time.Time
+	Active              bool
 }
 
 // A GLLHandler handles GLL messages from a stream.
