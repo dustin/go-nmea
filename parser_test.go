@@ -234,3 +234,23 @@ func TestGLLHandling(t *testing.T) {
 		t.Errorf("Expected more similarity between %#v and (wanted) %#v", h.gll, exp)
 	}
 }
+
+type zdaHandler struct {
+	zda ZDA
+}
+
+func (g *zdaHandler) HandleZDA(zda ZDA) {
+	g.zda = zda
+}
+
+// $GPZDA,162254.00,11,07,2006,00,00*63
+func TestZDAHandling(t *testing.T) {
+	h := &zdaHandler{}
+	for _, s := range strings.Split(ubloxSample, "\n") {
+		parseMessage(s, h)
+	}
+	exp := ZDA{time.Date(2006, 7, 11, 16, 22, 54, 0, time.UTC)}
+	if !similar(t, h.zda, exp) {
+		t.Errorf("Expected more similarity between %#v and (wanted) %#v", h.zda, exp)
+	}
+}

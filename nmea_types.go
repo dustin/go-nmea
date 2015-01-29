@@ -343,7 +343,7 @@ type ZTGHandler interface {
 
 // ZDA represents a Date and Time message.
 type ZDA struct {
-	// TODO
+	Timestamp time.Time
 }
 
 // A ZDAHandler handles ZDA messages from a stream.

@@ -17,6 +17,7 @@ var parsers = map[string]func([]string, interface{}) error{
 	"$GPGGA": ggaParser,
 	"$GPGSA": gsaParser,
 	"$GPGLL": gllParser,
+	"$GPZDA": zdaParser,
 }
 
 type cumulativeFloatParser struct {
@@ -309,6 +310,44 @@ func gllParser(parts []string, handler interface{}) error {
 		Active:    parts[6] == "A",
 	})
 	return nil
+}
+
+/*
+ZDA - Data and Time
+
+  $GPZDA,hhmmss.ss,dd,mm,yyyy,xx,yy*CC
+  $GPZDA,201530.00,04,07,2002,00,00*60
+
+where:
+	1.     hhmmss    HrMinSec(UTC)
+        2,3,4. dd,mm,yyy Day,Month,Year
+        5.     xx        local zone hours -13..13
+        6.     yy        local zone minutes 0..59
+*/
+func zdaParser(parts []string, handler interface{}) error {
+	h, ok := handler.(ZDAHandler)
+	if !ok {
+		return notHandled
+	}
+
+	if len(parts) != 7 || len(parts[1]) < 6 {
+		return fmt.Errorf("Unexpected ZDA packet: %#v (len=%v)", parts, len(parts))
+	}
+
+	cp := &cumulativeFloatParser{}
+	ts := time.Date(
+		cp.parseInt(parts[4]),
+		time.Month(cp.parseInt(parts[3])),
+		cp.parseInt(parts[2]),
+		cp.parseInt(parts[1][:2]),
+		cp.parseInt(parts[1][2:4]),
+		cp.parseInt(parts[1][4:6]),
+		int(float64(time.Second)*cp.parse(parts[1][6:])),
+		time.UTC)
+
+	h.HandleZDA(ZDA{ts})
+
+	return cp.err
 }
 
 func checkChecksum(line string) bool {
