@@ -20,11 +20,11 @@ var parsers = map[string]func([]string, interface{}) error{
 	"$GPZDA": zdaParser,
 }
 
-type cumulativeFloatParser struct {
+type cumulativeErrorParser struct {
 	err error
 }
 
-func (c *cumulativeFloatParser) parse(s string) float64 {
+func (c *cumulativeErrorParser) parseFloat(s string) float64 {
 	if s == "" {
 		return 0
 	}
@@ -35,7 +35,7 @@ func (c *cumulativeFloatParser) parse(s string) float64 {
 	return rv
 }
 
-func (c *cumulativeFloatParser) parseInt(s string) int {
+func (c *cumulativeErrorParser) parseInt(s string) int {
 	if s == "" {
 		return 0
 	}
@@ -46,7 +46,7 @@ func (c *cumulativeFloatParser) parseInt(s string) int {
 	return int(rv)
 }
 
-func parseDMS(s, ref string) (float64, error) {
+func (c *cumulativeErrorParser) parseDMS(s, ref string) float64 {
 	n := 2
 	m := 1.0
 	if ref == "E" || ref == "W" {
@@ -56,13 +56,12 @@ func parseDMS(s, ref string) (float64, error) {
 		m = -1
 	}
 
-	cp := &cumulativeFloatParser{}
-	deg := cp.parse(s[:n])
-	min := cp.parse(s[n:])
+	deg := c.parseFloat(s[:n])
+	min := c.parseFloat(s[n:])
 	deg += (min / 60.0)
 	deg *= m
 
-	return deg, cp.err
+	return deg
 }
 
 /*
@@ -87,22 +86,15 @@ func rmcParser(parts []string, handler interface{}) error {
 		return err
 	}
 
-	lat, err := parseDMS(parts[3], parts[4])
-	if err != nil {
-		return err
-	}
-	lon, err := parseDMS(parts[5], parts[6])
-	if err != nil {
-		return err
-	}
+	cp := &cumulativeErrorParser{}
 
-	cp := &cumulativeFloatParser{}
-
-	speed := cp.parse(parts[7])
-	angle := cp.parse(parts[8])
+	lat := cp.parseDMS(parts[3], parts[4])
+	lon := cp.parseDMS(parts[5], parts[6])
+	speed := cp.parseFloat(parts[7])
+	angle := cp.parseFloat(parts[8])
 	magvar := 0.0
 	if parts[10] != "" {
-		magvar = cp.parse(parts[10])
+		magvar = cp.parseFloat(parts[10])
 		if parts[11] == "W" {
 			magvar *= -1
 		}
@@ -148,12 +140,12 @@ func vtgParser(parts []string, handler interface{}) error {
 		return fmt.Errorf("Unexpected VTG packet: %#v", parts)
 	}
 
-	cp := &cumulativeFloatParser{}
+	cp := &cumulativeErrorParser{}
 	vtg := VTG{
-		True:     cp.parse(parts[1]),
-		Magnetic: cp.parse(parts[3]),
-		Knots:    cp.parse(parts[5]),
-		KMH:      cp.parse(parts[7]),
+		True:     cp.parseFloat(parts[1]),
+		Magnetic: cp.parseFloat(parts[3]),
+		Knots:    cp.parseFloat(parts[5]),
+		KMH:      cp.parseFloat(parts[7]),
 	}
 
 	if cp.err != nil {
@@ -206,25 +198,16 @@ func ggaParser(parts []string, handler interface{}) error {
 		return err
 	}
 
-	lat, err := parseDMS(parts[2], parts[3])
-	if err != nil {
-		return err
-	}
-	lon, err := parseDMS(parts[4], parts[5])
-	if err != nil {
-		return err
-	}
-
-	cp := &cumulativeFloatParser{}
+	cp := &cumulativeErrorParser{}
 	h.HandleGGA(GGA{
 		Taken:              t,
-		Latitude:           lat,
-		Longitude:          lon,
+		Latitude:           cp.parseDMS(parts[2], parts[3]),
+		Longitude:          cp.parseDMS(parts[4], parts[5]),
 		Quality:            FixQuality(cp.parseInt(parts[6])),
-		HorizontalDilution: cp.parse(parts[8]),
+		HorizontalDilution: cp.parseFloat(parts[8]),
 		NumSats:            cp.parseInt(parts[7]),
-		Altitude:           cp.parse(parts[9]),
-		GeoidHeight:        cp.parse(parts[11]),
+		Altitude:           cp.parseFloat(parts[9]),
+		GeoidHeight:        cp.parseFloat(parts[11]),
 	})
 
 	return cp.err
@@ -253,7 +236,7 @@ func gsaParser(parts []string, handler interface{}) error {
 		return fmt.Errorf("Unexpected GSA packet: %#v (len=%v)", parts, len(parts))
 	}
 
-	cp := &cumulativeFloatParser{}
+	cp := &cumulativeErrorParser{}
 	sats := []int{}
 	for _, s := range parts[3:15] {
 		if s != "" {
@@ -265,9 +248,9 @@ func gsaParser(parts []string, handler interface{}) error {
 		Auto:     parts[1] == "A",
 		Fix:      GSAFix(cp.parseInt(parts[2])),
 		SatsUsed: sats,
-		PDOP:     cp.parse(parts[15]),
-		HDOP:     cp.parse(parts[16]),
-		VDOP:     cp.parse(parts[17]),
+		PDOP:     cp.parseFloat(parts[15]),
+		HDOP:     cp.parseFloat(parts[16]),
+		VDOP:     cp.parseFloat(parts[17]),
 	})
 
 	return cp.err
@@ -289,24 +272,16 @@ func gllParser(parts []string, handler interface{}) error {
 		return notHandled
 	}
 
-	lat, err := parseDMS(parts[1], parts[2])
-	if err != nil {
-		return err
-	}
-	lon, err := parseDMS(parts[3], parts[4])
-	if err != nil {
-		return err
-	}
-
 	t, err := time.Parse("150405 UTC", parts[5]+" UTC")
 	if err != nil {
 		return err
 	}
 
+	cp := &cumulativeErrorParser{}
 	h.HandleGLL(GLL{
 		Taken:     t,
-		Latitude:  lat,
-		Longitude: lon,
+		Latitude:  cp.parseDMS(parts[1], parts[2]),
+		Longitude: cp.parseDMS(parts[3], parts[4]),
 		Active:    parts[6] == "A",
 	})
 	return nil
@@ -334,7 +309,7 @@ func zdaParser(parts []string, handler interface{}) error {
 		return fmt.Errorf("Unexpected ZDA packet: %#v (len=%v)", parts, len(parts))
 	}
 
-	cp := &cumulativeFloatParser{}
+	cp := &cumulativeErrorParser{}
 	ts := time.Date(
 		cp.parseInt(parts[4]),
 		time.Month(cp.parseInt(parts[3])),
@@ -342,7 +317,7 @@ func zdaParser(parts []string, handler interface{}) error {
 		cp.parseInt(parts[1][:2]),
 		cp.parseInt(parts[1][2:4]),
 		cp.parseInt(parts[1][4:6]),
-		int(float64(time.Second)*cp.parse(parts[1][6:])),
+		int(float64(time.Second)*cp.parseFloat(parts[1][6:])),
 		time.UTC)
 
 	h.HandleZDA(ZDA{ts})
