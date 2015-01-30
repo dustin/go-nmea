@@ -9,16 +9,18 @@ import (
 	"time"
 )
 
-var notHandled = errors.New("not handled")
+var (
+	notHandled = errors.New("not handled")
 
-var parsers = map[string]func([]string, interface{}) error{
-	"$GPRMC": rmcParser,
-	"$GPVTG": vtgParser,
-	"$GPGGA": ggaParser,
-	"$GPGSA": gsaParser,
-	"$GPGLL": gllParser,
-	"$GPZDA": zdaParser,
-}
+	parsers = map[string]func([]string, interface{}) error{
+		"$GPRMC": rmcParser,
+		"$GPVTG": vtgParser,
+		"$GPGGA": ggaParser,
+		"$GPGSA": gsaParser,
+		"$GPGLL": gllParser,
+		"$GPZDA": zdaParser,
+	}
+)
 
 type cumulativeErrorParser struct {
 	err error
