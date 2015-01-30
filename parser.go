@@ -312,6 +312,14 @@ func zdaParser(parts []string, handler interface{}) error {
 	}
 
 	cp := &cumulativeErrorParser{}
+	tz := time.UTC
+	tzh := cp.parseInt(parts[5])
+	tzm := cp.parseInt(parts[6])
+	if tzh != 0 || tzm != 0 {
+		// Has timezone.  Do timezone stuff
+		tz = time.FixedZone("GPS", (tzh*3600)+(tzm*60))
+	}
+
 	ts := time.Date(
 		cp.parseInt(parts[4]),
 		time.Month(cp.parseInt(parts[3])),
@@ -320,7 +328,7 @@ func zdaParser(parts []string, handler interface{}) error {
 		cp.parseInt(parts[1][2:4]),
 		cp.parseInt(parts[1][4:6]),
 		int(float64(time.Second)*cp.parseFloat(parts[1][6:])),
-		time.UTC)
+		tz)
 
 	h.HandleZDA(ZDA{ts})
 

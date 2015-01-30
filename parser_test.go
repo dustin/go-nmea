@@ -254,3 +254,20 @@ func TestZDAHandling(t *testing.T) {
 		t.Errorf("Expected more similarity between %#v and (wanted) %#v", h.zda, exp)
 	}
 }
+
+func TestZDAZones(t *testing.T) {
+	tests := map[string]time.Time{
+		"$GPZDA,162254.00,11,07,2006,00,00*63": time.Date(2006, 7, 11, 16, 22, 54, 0, time.UTC),
+		"$GPZDA,050306,29,10,2003,,*43":        time.Date(2003, 10, 29, 5, 3, 6, 0, time.UTC),
+		"$GPZDA,110003.00,27,03,2006,-5,00*7f": time.Date(2006, 3, 27, 11, 0, 3, 0, time.FixedZone("GPS", -18000)),
+	}
+
+	for in, exp := range tests {
+		h := &zdaHandler{}
+		parseMessage(in, h)
+		if !similar(t, h.zda, ZDA{exp}) {
+			t.Errorf("Expected more similarity between %#v and (wanted) %#v", h.zda, exp)
+		}
+
+	}
+}
