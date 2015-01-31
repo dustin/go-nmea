@@ -3,14 +3,13 @@ package nmea
 import (
 	"errors"
 	"fmt"
-	"log"
 	"strconv"
 	"strings"
 	"time"
 )
 
 var (
-	notHandled = errors.New("not handled")
+	errBadChecksum = errors.New("bad checksum")
 
 	parsers = map[string]func([]string, interface{}) error{
 		"$GPRMC": rmcParser,
@@ -80,7 +79,7 @@ func (c *cumulativeErrorParser) parseDMS(s, ref string) float64 {
 func rmcParser(parts []string, handler interface{}) error {
 	h, ok := handler.(RMCHandler)
 	if !ok {
-		return notHandled
+		return nil
 	}
 
 	t, err := time.Parse("150405.99 020106 UTC", parts[1]+" "+parts[9]+" UTC")
@@ -135,7 +134,7 @@ where:
 func vtgParser(parts []string, handler interface{}) error {
 	h, ok := handler.(VTGHandler)
 	if !ok {
-		return notHandled
+		return nil
 	}
 
 	if parts[2] != "T" || parts[4] != "M" || parts[6] != "N" || parts[8] != "K" {
@@ -188,7 +187,7 @@ Where:
 func ggaParser(parts []string, handler interface{}) error {
 	h, ok := handler.(GGAHandler)
 	if !ok {
-		return notHandled
+		return nil
 	}
 
 	if len(parts) < 13 || parts[10] != "M" || parts[12] != "M" {
@@ -231,7 +230,7 @@ Where:
 func gsaParser(parts []string, handler interface{}) error {
 	h, ok := handler.(GSAHandler)
 	if !ok {
-		return notHandled
+		return nil
 	}
 
 	if len(parts) != 18 {
@@ -271,7 +270,7 @@ Where:
 func gllParser(parts []string, handler interface{}) error {
 	h, ok := handler.(GLLHandler)
 	if !ok {
-		return notHandled
+		return nil
 	}
 
 	t, err := time.Parse("150405 UTC", parts[5]+" UTC")
@@ -304,7 +303,7 @@ where:
 func zdaParser(parts []string, handler interface{}) error {
 	h, ok := handler.(ZDAHandler)
 	if !ok {
-		return notHandled
+		return nil
 	}
 
 	if len(parts) != 7 || len(parts[1]) < 6 {
@@ -349,7 +348,6 @@ func checkChecksum(line string) bool {
 	}
 	exp, err := strconv.ParseInt(line[len(line)-2:], 16, 64)
 	if err != nil {
-		log.Printf("Failed to parse checksum: %v", err)
 		return false
 	}
 
@@ -363,17 +361,16 @@ func checkChecksum(line string) bool {
 	return cs == int(exp)
 }
 
-func parseMessage(line string, handler interface{}) {
+func parseMessage(line string, handler interface{}) error {
 	if !checkChecksum(line) {
 		// skip bad checksums
-		return
+		return errBadChecksum
 	}
 
 	parts := strings.Split(line[:len(line)-3], ",")
 
 	if p, ok := parsers[parts[0]]; ok {
-		if err := p(parts, handler); err != nil {
-			log.Printf("Error parsing %#v: %v", parts, err)
-		}
+		return p(parts, handler)
 	}
+	return nil
 }
