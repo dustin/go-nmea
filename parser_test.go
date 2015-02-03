@@ -36,6 +36,13 @@ func TestSampleParsing(t *testing.T) {
 	}
 }
 
+func TestSampleProcessing(t *testing.T) {
+	err := Process(strings.NewReader(ubloxSample), nil, nil)
+	if err != nil {
+		t.Errorf("Unexpected error, got %v", err)
+	}
+}
+
 type rmcHandler struct {
 	rmc RMC
 }

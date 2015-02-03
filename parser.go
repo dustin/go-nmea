@@ -1,8 +1,10 @@
 package nmea
 
 import (
+	"bufio"
 	"errors"
 	"fmt"
+	"io"
 	"strconv"
 	"strings"
 	"time"
@@ -373,4 +375,38 @@ func parseMessage(line string, handler interface{}) error {
 		return p(parts, handler)
 	}
 	return nil
+}
+
+// ErrorHandler handles error in processing individual messages.  If
+// the error handler returns nil, the processor will keep executing,
+// else Process will return the error the ErrorHandler returned.
+type ErrorHandler func(err error) error
+
+func defaultErrorHandler(err error) error {
+	return nil
+}
+
+// Process all of the NMEA messages from the given reader.
+//
+// The handler satisfies any *Handler interfaces the application
+// requires.  Any unhandled message will be ignored.
+//
+// An optional error handler can decide how to handle any errors that
+// arise in parsing.  The default will ignore parser errors.
+//
+// Process returns nil on EOF.
+func Process(r io.Reader, handler interface{}, errh ErrorHandler) error {
+	if errh == nil {
+		errh = defaultErrorHandler
+	}
+	s := bufio.NewScanner(r)
+	for s.Scan() {
+		err := parseMessage(s.Text(), handler)
+		if err != nil {
+			if e := errh(err); e != nil {
+				return e
+			}
+		}
+	}
+	return s.Err()
 }
