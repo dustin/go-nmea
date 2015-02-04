@@ -20,6 +20,7 @@ var (
 		"$GPGSA": gsaParser,
 		"$GPGLL": gllParser,
 		"$GPZDA": zdaParser,
+		"$GPGSV": gsvParser,
 	}
 )
 
@@ -332,6 +333,50 @@ func zdaParser(parts []string, handler interface{}) error {
 		tz)
 
 	h.HandleZDA(ZDA{ts})
+
+	return cp.err
+}
+
+/*
+  $GPGSV,2,1,08,01,40,083,46,02,17,308,41,12,07,344,39,14,22,228,45*75
+
+Where:
+      GSV          Satellites in view
+      1: 2            Number of sentences for full data
+      2: 1            sentence 1 of 2
+      3: 08           Number of satellites in view
+
+      01           Satellite PRN number
+      40           Elevation, degrees
+      083          Azimuth, degrees
+      46           SNR - higher is better
+           for up to 4 satellites per sentence
+      *75          the checksum data, always begins with *
+
+*/
+func gsvParser(parts []string, handler interface{}) error {
+	h, ok := handler.(GSVHandler)
+	if !ok {
+		return nil
+	}
+
+	cp := &cumulativeErrorParser{}
+	gsv := GSV{
+		InView:         cp.parseInt(parts[3]),
+		SentenceNum:    cp.parseInt(parts[2]),
+		TotalSentences: cp.parseInt(parts[1]),
+	}
+
+	for i := 4; i+4 <= len(parts); i += 4 {
+		gsv.SatInfo = append(gsv.SatInfo, GSVSatInfo{
+			cp.parseInt(parts[i]),
+			cp.parseInt(parts[i+1]),
+			cp.parseInt(parts[i+2]),
+			cp.parseInt(parts[i+3]),
+		})
+	}
+
+	h.HandleGSV(gsv)
 
 	return cp.err
 }

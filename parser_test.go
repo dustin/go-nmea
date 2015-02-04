@@ -278,3 +278,34 @@ func TestZDAZones(t *testing.T) {
 
 	}
 }
+
+type gsvHandler struct {
+	gsv GSV
+}
+
+func (g *gsvHandler) HandleGSV(gsv GSV) {
+	g.gsv = gsv
+}
+
+// $GPGSV,4,1,14, 25,15,175,30, 14,80,041,,  19,38,259,14,  01,52,223,18   *76
+// $GPGSV,4,2,14, 18,16,079,,   11,19,312,,  14,80,041,,    21,04,135,25   *7D
+// $GPGSV,4,3,14, 15,27,134,18, 03,25,222,,  22,51,057,16,  09,07,036,     *79
+// $GPGSV,4,4,14, 07,01,181,,   15,25,135,                                 *76
+func TestGSVHandling(t *testing.T) {
+	h := &gsvHandler{}
+	for _, s := range strings.Split(ubloxSample, "\n") {
+		parseMessage(s, h)
+	}
+	exp := GSV{
+		InView:         14,
+		SentenceNum:    4,
+		TotalSentences: 4,
+		SatInfo: []GSVSatInfo{
+			{7, 1, 181, 0},
+			{15, 25, 135, 0},
+		},
+	}
+	if !similar(t, h.gsv, exp) {
+		t.Errorf("Expected more similarity between %#v and (wanted) %#v", h.gsv, exp)
+	}
+}

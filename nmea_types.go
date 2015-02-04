@@ -177,9 +177,19 @@ type GSTHandler interface {
 	HandleGST(GST)
 }
 
+type GSVSatInfo struct {
+	PRN       int
+	Elevation int
+	Azimuth   int
+	SNR       int
+}
+
 // GSV represents a Detailed Satellite data message.
 type GSV struct {
-	// TODO
+	InView         int
+	SentenceNum    int
+	TotalSentences int
+	SatInfo        []GSVSatInfo
 }
 
 // A GSVHandler handles GSV messages from a stream.
