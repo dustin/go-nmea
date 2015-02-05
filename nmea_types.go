@@ -4,7 +4,9 @@ import "time"
 
 // AAM represents a Waypoint Arrival Alarm message.
 type AAM struct {
-	// TODO
+	Arrival       bool
+	Perpendicular bool
+	Radius        float64
 }
 
 // A AAMHandler handles AAM messages from a stream.

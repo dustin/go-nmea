@@ -21,6 +21,7 @@ var (
 		"$GPGLL": gllParser,
 		"$GPZDA": zdaParser,
 		"$GPGSV": gsvParser,
+		"$GPAAM": aamParser,
 	}
 )
 
@@ -409,6 +410,37 @@ func (g *GSVAccumulator) Add(a GSV) bool {
 	g.SatInfo = append(g.SatInfo, a.SatInfo...)
 
 	return g.prev == g.Parts
+}
+
+/*
+  	$GPAAM,A,A,0.10,N,WPTNME*32
+
+Where:
+    AAM    Arrival Alarm
+    1:A          Arrival circle entered
+    2:A          Perpendicular passed
+    3:0.10       Circle radius
+    4:N          Nautical miles
+    5:WPTNME     Waypoint name
+    *32          Checksum data
+
+*/
+func aamParser(parts []string, handler interface{}) error {
+	h, ok := handler.(AAMHandler)
+	if !ok {
+		return nil
+	}
+
+	cp := &cumulativeErrorParser{}
+	aam := AAM{
+		Arrival:       parts[1] == "A",
+		Perpendicular: parts[2] == "A",
+		Radius:        cp.parseFloat(parts[3]),
+	}
+
+	h.HandleAAM(aam)
+
+	return cp.err
 }
 
 func checkChecksum(line string) bool {

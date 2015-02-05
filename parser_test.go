@@ -392,3 +392,27 @@ func TestGSVHandling(t *testing.T) {
 		t.Errorf("Expected more similarity between %#v and (wanted) %#v", h.gsv, exp)
 	}
 }
+
+type aamHandler struct {
+	aam AAM
+}
+
+func (g *aamHandler) HandleAAM(aam AAM) {
+	g.aam = aam
+}
+
+// $GPAAM,A,A,0.10,N,WPTNME*32
+func TestAAMHandling(t *testing.T) {
+	h := &aamHandler{}
+	for _, s := range strings.Split(ubloxSample, "\n") {
+		parseMessage(s, h)
+	}
+	exp := AAM{
+		Arrival:       true,
+		Perpendicular: true,
+		Radius:        0.1,
+	}
+	if !similar(t, h.aam, exp) {
+		t.Errorf("Expected more similarity between %#v and (wanted) %#v", h.aam, exp)
+	}
+}
