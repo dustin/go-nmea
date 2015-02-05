@@ -8,6 +8,7 @@ import (
 	"strings"
 	"testing"
 	"time"
+	"unicode"
 )
 
 func TestChecksum(t *testing.T) {
@@ -78,6 +79,9 @@ func similar(t *testing.T, a, b interface{}) bool {
 	for i := 0; i < ta.NumField(); i++ {
 		f := ta.Field(i)
 		name := f.Name
+		if !unicode.IsUpper(rune(name[0])) {
+			continue
+		}
 		af := va.Field(i)
 		bf := vb.Field(i)
 		if af.Type() != bf.Type() {
