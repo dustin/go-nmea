@@ -22,6 +22,7 @@ var (
 		"$GPZDA": zdaParser,
 		"$GPGSV": gsvParser,
 		"$GPAAM": aamParser,
+		"$GPGST": gstParser,
 	}
 )
 
@@ -439,6 +440,50 @@ func aamParser(parts []string, handler interface{}) error {
 	}
 
 	h.HandleAAM(aam)
+
+	return cp.err
+}
+
+/*
+  	$GPGST,024603.00,3.2,6.6,4.7,47.3,5.8,5.6,22.0*58
+
+Where:
+    GST    pseudorange noise statistics
+    1:024603.00  UTC time of associated GGA fix
+    2:3.2        Total RMS standard deviation of ranges inputs to the navigation solution
+    3:6.6        Standard deviation (meters) of semi-major axis of error ellipse
+    4:4.7        Standard deviation (meters) of semi-minor axis of error ellipse
+    5:47.3       Orientation of semi-major axis of error ellipse (true north degrees)
+    6:5.8        Standard deviation (meters) of latitude error
+    7:5.6        Standard deviation (meters) of longitude error
+    8:22.0       Standard deviation (meters) of latitude error
+    *32          Checksum data
+
+*/
+func gstParser(parts []string, handler interface{}) error {
+	h, ok := handler.(GSTHandler)
+	if !ok {
+		return nil
+	}
+
+	t, err := time.Parse("150405 UTC", parts[1][:6]+" UTC")
+	if err != nil {
+		return err
+	}
+
+	cp := &cumulativeErrorParser{}
+	gst := GST{
+		Timestamp:             t,
+		Deviation:             cp.parseFloat(parts[2]),
+		MajorDeviceation:      cp.parseFloat(parts[3]),
+		MinorDeviation:        cp.parseFloat(parts[4]),
+		MajorOrientation:      cp.parseFloat(parts[5]),
+		MinorOrientation:      cp.parseFloat(parts[6]),
+		LatitudeErrDeviation:  cp.parseFloat(parts[7]),
+		LongitudeErrDeviation: cp.parseFloat(parts[8]),
+	}
+
+	h.HandleGST(gst)
 
 	return cp.err
 }

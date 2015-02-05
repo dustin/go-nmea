@@ -416,3 +416,32 @@ func TestAAMHandling(t *testing.T) {
 		t.Errorf("Expected more similarity between %#v and (wanted) %#v", h.aam, exp)
 	}
 }
+
+type gstHandler struct {
+	gst GST
+}
+
+func (g *gstHandler) HandleGST(gst GST) {
+	g.gst = gst
+}
+
+// $GPGST,024603.00,3.2,6.6,4.7,47.3,5.8,5.6,22.0*58
+func TestGSTHandling(t *testing.T) {
+	h := &gstHandler{}
+	for _, s := range strings.Split(ubloxSample, "\n") {
+		parseMessage(s, h)
+	}
+	exp := GST{
+		Timestamp:             time.Date(0, 1, 1, 02, 46, 03, 0, time.UTC),
+		Deviation:             3.2,
+		MajorDeviceation:      6.6,
+		MinorDeviation:        4.7,
+		MajorOrientation:      47.3,
+		MinorOrientation:      5.8,
+		LatitudeErrDeviation:  5.6,
+		LongitudeErrDeviation: 22,
+	}
+	if !similar(t, h.gst, exp) {
+		t.Errorf("Expected more similarity between %#v and (wanted) %#v", h.gst, exp)
+	}
+}
