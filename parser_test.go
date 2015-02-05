@@ -291,6 +291,84 @@ func (g *gsvHandler) HandleGSV(gsv GSV) {
 	g.gsv = gsv
 }
 
+func TestGSVAccumulation(t *testing.T) {
+	in := []GSV{
+		// Send a few out of order
+		{TotalSentences: 4, SentenceNum: 2, InView: 14, SatInfo: []GSVSatInfo{
+			{18, 16, 79, 0},
+			{11, 19, 312, 0},
+			{14, 80, 41, 0},
+			{21, 4, 135, 25},
+		}},
+		{TotalSentences: 4, SentenceNum: 1, InView: 14, SatInfo: []GSVSatInfo{
+			{25, 15, 175, 30},
+			{14, 80, 41, 0},
+			{19, 38, 259, 14},
+			{1, 52, 233, 18},
+		}},
+		{TotalSentences: 4, SentenceNum: 3, InView: 14, SatInfo: []GSVSatInfo{
+			{15, 27, 134, 18},
+			{3, 25, 222, 0},
+			{22, 51, 57, 16},
+			{9, 7, 36, 0},
+		}},
+
+		// Now the real ones
+		{TotalSentences: 4, SentenceNum: 1, InView: 14, SatInfo: []GSVSatInfo{
+			{25, 15, 175, 30},
+			{14, 80, 41, 0},
+			{19, 38, 259, 14},
+			{1, 52, 233, 18},
+		}},
+		{TotalSentences: 4, SentenceNum: 2, InView: 14, SatInfo: []GSVSatInfo{
+			{18, 16, 79, 0},
+			{11, 19, 312, 0},
+			{14, 80, 41, 0},
+			{21, 4, 135, 25},
+		}},
+		{TotalSentences: 4, SentenceNum: 3, InView: 14, SatInfo: []GSVSatInfo{
+			{15, 27, 134, 18},
+			{3, 25, 222, 0},
+			{22, 51, 57, 16},
+			{9, 7, 36, 0},
+		}},
+		{TotalSentences: 4, SentenceNum: 4, InView: 14, SatInfo: []GSVSatInfo{
+			{7, 1, 181, 0},
+			{15, 25, 135, 0},
+		}},
+	}
+	exp := GSVAccumulator{
+		InView: 14,
+		Parts:  4,
+		prev:   4,
+		SatInfo: []GSVSatInfo{
+			{25, 15, 175, 30},
+			{14, 80, 41, 0},
+			{19, 38, 259, 14},
+			{1, 52, 233, 18},
+			{18, 16, 79, 0},
+			{11, 19, 312, 0},
+			{14, 80, 41, 0},
+			{21, 4, 135, 25},
+			{15, 27, 134, 18},
+			{3, 25, 222, 0},
+			{22, 51, 57, 16},
+			{9, 7, 36, 0},
+			{7, 1, 181, 0},
+			{15, 25, 135, 0},
+		},
+	}
+
+	a := GSVAccumulator{}
+	for _, g := range in {
+		a.Add(g)
+	}
+
+	if !similar(t, a, exp) {
+		t.Errorf("Expected more similarity between %#v and (wanted) %#v", a, exp)
+	}
+}
+
 // $GPGSV,4,1,14, 25,15,175,30, 14,80,041,,  19,38,259,14,  01,52,223,18   *76
 // $GPGSV,4,2,14, 18,16,079,,   11,19,312,,  14,80,041,,    21,04,135,25   *7D
 // $GPGSV,4,3,14, 15,27,134,18, 03,25,222,,  22,51,057,16,  09,07,036,     *79
@@ -300,6 +378,7 @@ func TestGSVHandling(t *testing.T) {
 	for _, s := range strings.Split(ubloxSample, "\n") {
 		parseMessage(s, h)
 	}
+
 	exp := GSV{
 		InView:         14,
 		SentenceNum:    4,

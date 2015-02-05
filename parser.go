@@ -381,6 +381,36 @@ func gsvParser(parts []string, handler interface{}) error {
 	return cp.err
 }
 
+// GSVAccumulator combines several GSV structures into a single value.
+type GSVAccumulator struct {
+	InView  int
+	Parts   int
+	prev    int
+	SatInfo []GSVSatInfo
+}
+
+// Add a GSV to the accumulating GSV state.  Returns true if
+// this is the final state.
+func (g *GSVAccumulator) Add(a GSV) bool {
+	if a.TotalSentences != g.Parts || a.SentenceNum != g.prev+1 {
+		g.InView = a.InView
+		g.Parts = a.TotalSentences
+		g.prev = a.SentenceNum
+		g.SatInfo = a.SatInfo
+
+		if a.SentenceNum != 1 {
+			g.prev = 0
+			g.SatInfo = nil
+		}
+		return a.TotalSentences == 1
+	}
+
+	g.prev = a.SentenceNum
+	g.SatInfo = append(g.SatInfo, a.SatInfo...)
+
+	return g.prev == g.Parts
+}
+
 func checkChecksum(line string) bool {
 	cs := 0
 	if len(line) < 4 {
