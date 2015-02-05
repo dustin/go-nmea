@@ -109,7 +109,7 @@ func similar(t *testing.T, a, b interface{}) bool {
 			}
 		default:
 			if !reflect.DeepEqual(av, bv) {
-				t.Errorf("%T field %v was wrong: %v != %v", av, name, av, bv)
+				t.Errorf("%T field %v was wrong:\n%v\n!=\n%v", av, name, av, bv)
 				return false
 			}
 		}
@@ -366,6 +366,53 @@ func TestGSVAccumulation(t *testing.T) {
 
 	if !similar(t, a, exp) {
 		t.Errorf("Expected more similarity between %#v and (wanted) %#v", a, exp)
+	}
+}
+
+type gsvAccStreamer struct {
+	g        GSVAccumulator
+	complete bool
+}
+
+func (g *gsvAccStreamer) HandleGSV(gsv GSV) {
+	g.complete = g.g.Add(gsv)
+}
+
+func TestStreamAccumulation(t *testing.T) {
+	ga := &gsvAccStreamer{}
+	err := Process(strings.NewReader(ubloxSample), ga, nil)
+	if err != nil {
+		t.Errorf("Unexpected error, got %v", err)
+	}
+
+	exp := GSVAccumulator{
+		InView: 14,
+		Parts:  4,
+		prev:   4,
+		SatInfo: []GSVSatInfo{
+			{25, 15, 175, 30},
+			{14, 80, 41, 0},
+			{19, 38, 259, 14},
+			{1, 52, 223, 18},
+			{18, 16, 79, 0},
+			{11, 19, 312, 0},
+			{14, 80, 41, 0},
+			{21, 4, 135, 25},
+			{15, 27, 134, 18},
+			{3, 25, 222, 0},
+			{22, 51, 57, 16},
+			{9, 7, 36, 0},
+			{7, 1, 181, 0},
+			{15, 25, 135, 0},
+		},
+	}
+
+	if !ga.complete {
+		t.Errorf("Expected a complete set after streaming.")
+	}
+
+	if !similar(t, ga.g, exp) {
+		t.Errorf("Expected more similarity between %#v and (wanted) %#v", ga.g, exp)
 	}
 }
 
