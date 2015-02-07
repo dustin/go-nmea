@@ -382,6 +382,11 @@ func gsvParser(parts []string, handler interface{}) error {
 }
 
 // GSVAccumulator combines several GSV structures into a single value.
+//
+// GSV state is split sacross multiple sentences that are parsed
+// independently.  Applications that want to see the complete state
+// can use GSVAccumulator as a helper to stitch the parts together
+// into a single unified state.
 type GSVAccumulator struct {
 	InView  int
 	Parts   int
@@ -389,8 +394,11 @@ type GSVAccumulator struct {
 	SatInfo []GSVSatInfo
 }
 
-// Add a GSV to the accumulating GSV state.  Returns true if
-// this is the final state.
+// Add a GSV to the accumulating GSV state.
+//
+// Add returns true whenever the invocation left accumulation in a
+// complete state.  You may continue to call Add after a complete
+// state -- the state will simply be reset.
 func (g *GSVAccumulator) Add(a GSV) bool {
 	if a.TotalSentences != g.Parts || a.SentenceNum != g.prev+1 {
 		g.InView = a.InView
