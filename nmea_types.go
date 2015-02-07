@@ -4,7 +4,9 @@ import "time"
 
 // AAM represents a Waypoint Arrival Alarm message.
 type AAM struct {
-	// TODO
+	Arrival       bool
+	Perpendicular bool
+	Radius        float64
 }
 
 // A AAMHandler handles AAM messages from a stream.
@@ -169,7 +171,15 @@ type GSAHandler interface {
 
 // GST represents a GPS Pseudorange Noise Statistics message.
 type GST struct {
-	// TODO
+	Timestamp             time.Time
+	Deviation             float64
+	MajorDeviceation      float64
+	MinorDeviation        float64
+	MajorOrientation      float64
+	MinorOrientation      float64
+	LatitudeErrDeviation  float64
+	LongitudeErrDeviation float64
+	AltitudeErrDeviation  float64
 }
 
 // A GSTHandler handles GST messages from a stream.
