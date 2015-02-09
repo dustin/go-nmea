@@ -439,3 +439,22 @@ func TestGSVHandling(t *testing.T) {
 		t.Errorf("Expected more similarity between %#v and (wanted) %#v", h.gsv, exp)
 	}
 }
+
+// Validate type combinations as combined handlers.
+type testUnion struct {
+	vtgHandler
+	ggaHandler
+	gsaHandler
+	gllHandler
+	ZDAHandler
+	gsvHandler
+}
+
+var _ = interface {
+	VTGHandler
+	GGAHandler
+	GSAHandler
+	GLLHandler
+	ZDAHandler
+	GSVHandler
+}(&testUnion{})
