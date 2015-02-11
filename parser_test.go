@@ -31,6 +31,30 @@ func TestChecksum(t *testing.T) {
 	}
 }
 
+func TestQualityString(t *testing.T) {
+	tests := map[string]string{
+		InvalidFix.String(): "invalid fix",
+		GPSFix.String():     "gps",
+	}
+	for got, exp := range tests {
+		if got != exp {
+			t.Errorf("Got %q, expected %q", got, exp)
+		}
+	}
+}
+
+func TestGPSFixString(t *testing.T) {
+	tests := map[string]string{
+		NoFix.String(): "no fix",
+		Fix3D.String(): "3D fix",
+	}
+	for got, exp := range tests {
+		if got != exp {
+			t.Errorf("Got %q, expected %q", got, exp)
+		}
+	}
+}
+
 func TestSampleParsing(t *testing.T) {
 	for _, s := range strings.Split(ubloxSample, "\n") {
 		parseMessage(s, nil)
