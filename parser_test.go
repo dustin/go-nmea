@@ -68,6 +68,53 @@ func TestSampleProcessing(t *testing.T) {
 	}
 }
 
+func TestCumulativeErrorParser(t *testing.T) {
+	ftests := []struct {
+		in     string
+		exp    float64
+		experr bool
+	}{
+		{"0", 0, false},
+		{"1.0", 1, false},
+		{"x", 0, true},
+		{"1.0", 1, true},
+	}
+
+	cp := &cumulativeErrorParser{}
+	for _, test := range ftests {
+		got := cp.parseFloat(test.in)
+		if got != test.exp {
+			t.Errorf("On %q, expected %f, got %f", test.in, test.exp, got)
+		}
+		if (cp.err != nil) != test.experr {
+			t.Errorf("Expected error=%v  was %v", test.experr, cp.err)
+		}
+	}
+
+	itests := []struct {
+		in     string
+		exp    int
+		experr bool
+	}{
+		{"0", 0, false},
+		{"1", 1, false},
+		{"x", 0, true},
+		{"1", 1, true},
+	}
+
+	cp = &cumulativeErrorParser{}
+	for _, test := range itests {
+		got := cp.parseInt(test.in)
+		if got != test.exp {
+			t.Errorf("On %q, expected %d, got %d", test.in, test.exp, got)
+		}
+		if (cp.err != nil) != test.experr {
+			t.Errorf("Expected error=%v  was %v", test.experr, cp.err)
+		}
+	}
+
+}
+
 type rmcHandler struct {
 	rmc RMC
 }
