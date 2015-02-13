@@ -115,6 +115,36 @@ func TestCumulativeErrorParser(t *testing.T) {
 
 }
 
+// Validate type combinations as combined handlers.
+type testUnion struct {
+	vtgHandler
+	ggaHandler
+	gsaHandler
+	gllHandler
+	ZDAHandler
+	gsvHandler
+	rmcHandler
+}
+
+var _ = interface {
+	GGAHandler
+	GLLHandler
+	GSAHandler
+	GSVHandler
+	RMCHandler
+	VTGHandler
+	ZDAHandler
+}(&testUnion{})
+
+func TestParserUnderflow(t *testing.T) {
+	ah := &testUnion{}
+	for prefix, handler := range parsers {
+		if err := handler([]string{prefix}, ah); err == nil {
+			t.Errorf("Unexpected error handling %v: %v", prefix, err)
+		}
+	}
+}
+
 type rmcHandler struct {
 	rmc RMC
 }
@@ -510,22 +540,3 @@ func TestGSVHandling(t *testing.T) {
 		t.Errorf("Expected more similarity between %#v and (wanted) %#v", h.gsv, exp)
 	}
 }
-
-// Validate type combinations as combined handlers.
-type testUnion struct {
-	vtgHandler
-	ggaHandler
-	gsaHandler
-	gllHandler
-	ZDAHandler
-	gsvHandler
-}
-
-var _ = interface {
-	VTGHandler
-	GGAHandler
-	GSAHandler
-	GLLHandler
-	ZDAHandler
-	GSVHandler
-}(&testUnion{})

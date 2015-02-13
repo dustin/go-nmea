@@ -12,6 +12,7 @@ import (
 
 var (
 	errBadChecksum = errors.New("bad checksum")
+	errShortMsg    = errors.New("short message")
 
 	parsers = map[string]func([]string, interface{}) error{
 		"$GPRMC": rmcParser,
@@ -85,6 +86,10 @@ func rmcParser(parts []string, handler interface{}) error {
 		return nil
 	}
 
+	if len(parts) < 12 {
+		return errShortMsg
+	}
+
 	t, err := time.Parse("150405.99 020106 UTC", parts[1]+" "+parts[9]+" UTC")
 	if err != nil {
 		return err
@@ -140,7 +145,7 @@ func vtgParser(parts []string, handler interface{}) error {
 		return nil
 	}
 
-	if parts[2] != "T" || parts[4] != "M" || parts[6] != "N" || parts[8] != "K" {
+	if len(parts) < 9 || parts[2] != "T" || parts[4] != "M" || parts[6] != "N" || parts[8] != "K" {
 		return fmt.Errorf("Unexpected VTG packet: %#v", parts)
 	}
 
@@ -276,6 +281,10 @@ func gllParser(parts []string, handler interface{}) error {
 		return nil
 	}
 
+	if len(parts) < 7 {
+		return errShortMsg
+	}
+
 	t, err := time.Parse("150405 UTC", parts[5]+" UTC")
 	if err != nil {
 		return err
@@ -295,7 +304,7 @@ func gllParser(parts []string, handler interface{}) error {
 ZDA - Data and Time
 
   $GPZDA,hhmmss.ss,dd,mm,yyyy,xx,yy*CC
-  $GPZDA,201530.00,04,07,2002,00,00*60
+  $GPZDA,201530.00,04,07,2002,00,00*605
 
 where:
 	1.     hhmmss    HrMinSec(UTC)
@@ -358,6 +367,10 @@ func gsvParser(parts []string, handler interface{}) error {
 	h, ok := handler.(GSVHandler)
 	if !ok {
 		return nil
+	}
+
+	if len(parts) < 4 {
+		return errShortMsg
 	}
 
 	cp := &cumulativeErrorParser{}
