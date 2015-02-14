@@ -238,6 +238,14 @@ func TestRMCHandling(t *testing.T) {
 	}
 }
 
+func TestRMCBadTime(t *testing.T) {
+	input := "$GPRMC,262254.00,A,3723.02837,N,12159.39853,W,0.820,188.36,110706,,,A*74"
+	h := &rmcHandler{}
+	if err := rmcParser(strings.Split(input, ","), h); err == nil {
+		t.Errorf("Expected error parsing bad time")
+	}
+}
+
 type vtgHandler struct {
 	vtg VTG
 }
