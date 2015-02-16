@@ -2,6 +2,7 @@ package nmea
 
 import (
 	"encoding/json"
+	"errors"
 	"fmt"
 	"math"
 	"reflect"
@@ -546,5 +547,12 @@ func TestGSVHandling(t *testing.T) {
 	}
 	if !similar(t, h.gsv, exp) {
 		t.Errorf("Expected more similarity between %#v and (wanted) %#v", h.gsv, exp)
+	}
+}
+
+func TestDefaultErrorHandler(t *testing.T) {
+	e := defaultErrorHandler(errors.New("x"))
+	if e != nil {
+		t.Errorf("Expected error to be eaten by defaultHandler, got %v", e)
 	}
 }
