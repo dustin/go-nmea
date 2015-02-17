@@ -467,10 +467,11 @@ func parseMessage(line string, handler interface{}) error {
 
 	parts := strings.Split(line[:len(line)-3], ",")
 
+	var err error
 	if p, ok := parsers[parts[0]]; ok {
-		return p(parts, handler)
+		err = p(parts, handler)
 	}
-	return nil
+	return err
 }
 
 // ErrorHandler handles error in processing individual messages.  If
