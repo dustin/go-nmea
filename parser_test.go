@@ -255,6 +255,14 @@ func (r *vtgHandler) HandleVTG(vtg VTG) {
 	r.vtg = vtg
 }
 
+func TestVTGError(t *testing.T) {
+	h := &vtgHandler{}
+	err := vtgParser([]string{"VTG", "x", "T", "x", "M", "x", "N", "x", "K"}, h)
+	if err == nil {
+		t.Errorf("Expected error parsing garbage")
+	}
+}
+
 func TestVTGHandling(t *testing.T) {
 	h := &vtgHandler{}
 	for _, s := range strings.Split(ubloxSample, "\n") {
