@@ -122,7 +122,7 @@ type testUnion struct {
 	ggaHandler
 	gsaHandler
 	gllHandler
-	ZDAHandler
+	zdaHandler
 	gsvHandler
 	rmcHandler
 }
