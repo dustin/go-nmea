@@ -564,3 +564,16 @@ func TestDefaultErrorHandler(t *testing.T) {
 		t.Errorf("Expected error to be eaten by defaultHandler, got %v", e)
 	}
 }
+
+func TestNonDefaultErrorHandler(t *testing.T) {
+	h := &testUnion{}
+	err := Process(strings.NewReader(ubloxSample), h, func(e error) error { return e })
+	if err != nil {
+		t.Errorf("Unexpected no error, got %v", err)
+	}
+
+	err = Process(strings.NewReader(`$GPGSV,4,1,1`), h, func(e error) error { return e })
+	if err == nil {
+		t.Errorf("Expected error parsing junk, got nil")
+	}
+}
