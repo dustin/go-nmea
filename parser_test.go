@@ -46,8 +46,10 @@ func TestQualityString(t *testing.T) {
 
 func TestGPSFixString(t *testing.T) {
 	tests := map[string]string{
-		NoFix.String(): "no fix",
-		Fix3D.String(): "3D fix",
+		NoFix.String():           "no fix",
+		Fix3D.String():           "3D fix",
+		FixQuality(-1).String():  "[Invalid Fix Value: -1]",
+		FixQuality(100).String(): "[Invalid Fix Value: 100]",
 	}
 	for got, exp := range tests {
 		if got != exp {

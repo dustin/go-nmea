@@ -1,6 +1,9 @@
 package nmea
 
-import "time"
+import (
+	"fmt"
+	"time"
+)
 
 // FixQuality represents the quality of a position fix in a GGA packet.
 type FixQuality int
@@ -30,6 +33,9 @@ var fixNames = []string{
 }
 
 func (q FixQuality) String() string {
+	if q < 0 || int(q) >= len(fixNames) {
+		return fmt.Sprintf("[Invalid Fix Value: %d]", q)
+	}
 	return fixNames[q]
 }
 
