@@ -44,14 +44,31 @@ func TestQualityString(t *testing.T) {
 	}
 }
 
-func TestGPSFixString(t *testing.T) {
-	tests := map[string]string{
-		NoFix.String():           "no fix",
-		Fix3D.String():           "3D fix",
-		FixQuality(-1).String():  "[Invalid Fix Value: -1]",
-		FixQuality(100).String(): "[Invalid Fix Value: 100]",
+func TestGPSFixQualityString(t *testing.T) {
+	tests := map[FixQuality]string{
+		InvalidFix:      "invalid fix",
+		PPSFix:          "pps",
+		FixQuality(-1):  "[Invalid Fix Value: -1]",
+		FixQuality(100): "[Invalid Fix Value: 100]",
 	}
-	for got, exp := range tests {
+	for fq, exp := range tests {
+		got := fq.String()
+		if got != exp {
+			t.Errorf("Got %q, expected %q", got, exp)
+		}
+	}
+}
+
+func TestGPSGSAFixString(t *testing.T) {
+	tests := map[GSAFix]string{
+		GSAFix(0):   "[Invalid GSA Fix: 0]",
+		NoFix:       "no fix",
+		Fix3D:       "3D fix",
+		GSAFix(-1):  "[Invalid GSA Fix: -1]",
+		GSAFix(100): "[Invalid GSA Fix: 100]",
+	}
+	for fq, exp := range tests {
+		got := fq.String()
 		if got != exp {
 			t.Errorf("Got %q, expected %q", got, exp)
 		}

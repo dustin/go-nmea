@@ -77,6 +77,9 @@ const (
 )
 
 func (g GSAFix) String() string {
+	if g < NoFix || g > Fix3D {
+		return fmt.Sprintf("[Invalid GSA Fix: %d]", g)
+	}
 	return []string{"", "no fix", "2D fix", "3D fix"}[g]
 }
 
