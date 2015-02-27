@@ -333,6 +333,15 @@ func TestGGAHandling(t *testing.T) {
 	}
 }
 
+func TestGGAGonnaHaveABadTime(t *testing.T) {
+	h := &ggaHandler{}
+	err := ggaParser([]string{"$GPGGA", "999999", "4807.038", "N", "01131.000", "E", "1",
+		"08", "0.9", "545.4", "M", "46.9", "M", "", "", "*44"}, h)
+	if err == nil {
+		t.Errorf("Expected error parsing invalid time, got %v", h.gga)
+	}
+}
+
 type gsaHandler struct {
 	gsa GSA
 }
