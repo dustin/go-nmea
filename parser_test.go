@@ -392,6 +392,14 @@ func TestGLLHandling(t *testing.T) {
 	}
 }
 
+func TestGLLGonnaHaveABadTime(t *testing.T) {
+	h := &gllHandler{}
+	err := gllParser([]string{"$GPGLL", "4916.46", "N", "12311.12", "W", "999999", "A", "*44"}, h)
+	if err == nil {
+		t.Errorf("Expected error parsing invalid time, got %#v", h.gll)
+	}
+}
+
 type zdaHandler struct {
 	zda ZDA
 }
