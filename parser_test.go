@@ -173,6 +173,18 @@ func (r *rmcHandler) HandleRMC(rmc RMC) {
 	r.rmc = rmc
 }
 
+func TestRMCMagVar(t *testing.T) {
+	h := &rmcHandler{}
+	err := rmcParser([]string{"$GPRMC", "123519", "A", "4807.038", "N", "01131.000", "E",
+		"022.4", "084.4", "230394", "003.1", "W"}, h)
+	if err != nil {
+		t.Errorf("Failed to parse rmc data: %v", err)
+	}
+	if !near(h.rmc.Magvar, -3.1) {
+		t.Errorf("Expected magvar near -3.1, got %v", h.rmc.Magvar)
+	}
+}
+
 func logJSON(t *testing.T, h interface{}) {
 	j, err := json.Marshal(h)
 	if err != nil {
