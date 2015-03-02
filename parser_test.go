@@ -185,6 +185,15 @@ func TestRMCMagVar(t *testing.T) {
 	}
 }
 
+func TestRMCError(t *testing.T) {
+	h := &rmcHandler{}
+	err := rmcParser([]string{"$GPRMC", "123519", "A", "4807.038", "N", "X1131.000", "E",
+		"022.4", "084.4", "230394", "003.1", "W"}, h)
+	if err == nil {
+		t.Errorf("Expected to fail to parse rmc data, got: %#v", h.rmc)
+	}
+}
+
 func logJSON(t *testing.T, h interface{}) {
 	j, err := json.Marshal(h)
 	if err != nil {
