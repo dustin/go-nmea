@@ -88,6 +88,13 @@ func TestSampleProcessing(t *testing.T) {
 	}
 }
 
+func TestFreeNMEASampleProcessing(t *testing.T) {
+	err := Process(strings.NewReader(freeNmeaSample), nil, nil)
+	if err != nil {
+		t.Errorf("Unexpected error, got %v", err)
+	}
+}
+
 func TestCumulativeErrorParser(t *testing.T) {
 	ftests := []struct {
 		in     string
