@@ -5,6 +5,7 @@ import (
 	"errors"
 	"fmt"
 	"math"
+	"os"
 	"reflect"
 	"strings"
 	"testing"
@@ -85,6 +86,18 @@ func TestSampleProcessing(t *testing.T) {
 	err := Process(strings.NewReader(ubloxSample), nil, nil)
 	if err != nil {
 		t.Errorf("Unexpected error, got %v", err)
+	}
+}
+
+func ExampleProcessor() {
+	f, err := os.Open("/dev/gps")
+	if err != nil {
+		panic(err)
+	}
+	defer f.Close()
+	err = Process(f, zdaHandler{}, nil)
+	if err != nil {
+		panic(err)
 	}
 }
 
