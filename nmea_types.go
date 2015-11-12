@@ -8,8 +8,9 @@ import (
 // FixQuality represents the quality of a position fix in a GGA packet.
 type FixQuality int
 
+// FixQuality values
 const (
-	InvalidFix = FixQuality(iota)
+	InvalidFix FixQuality = iota
 	GPSFix
 	DGPSFix
 	PPSFix
@@ -67,10 +68,13 @@ type GLLHandler interface {
 	HandleGLL(GLL)
 }
 
+// GSAFix represents the fix type as reported by a GSA message
+// (overall satellite data).
 type GSAFix int
 
+// GSA fix values.
 const (
-	_ = GSAFix(iota)
+	_ GSAFix = iota
 	NoFix
 	Fix2D
 	Fix3D
@@ -96,6 +100,7 @@ type GSAHandler interface {
 	HandleGSA(GSA)
 }
 
+// GSVSatInfo represents detailed satellite info.
 type GSVSatInfo struct {
 	PRN       int
 	Elevation int
