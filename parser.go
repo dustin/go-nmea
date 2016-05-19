@@ -61,6 +61,10 @@ func (c *cumulativeErrorParser) parseDMS(s, ref string) float64 {
 		m = -1
 	}
 
+	if n >= len(s) {
+		c.err = errors.New("malformed DMS (lat/long): " + s + " " + ref)
+		return 0
+	}
 	deg := c.parseFloat(s[:n])
 	min := c.parseFloat(s[n:])
 	deg += (min / 60.0)
