@@ -89,7 +89,7 @@ func TestSampleProcessing(t *testing.T) {
 	}
 }
 
-func ExampleProcessor() {
+func ExampleProcess() {
 	f, err := os.Open("/dev/gps")
 	if err != nil {
 		panic(err)
