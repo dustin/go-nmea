@@ -30,7 +30,7 @@ type cumulativeErrorParser struct {
 }
 
 func (c *cumulativeErrorParser) parseFloat(s string) float64 {
-	if s == "" {
+	if s == "" || c.err != nil {
 		return 0
 	}
 	rv, err := strconv.ParseFloat(s, 64)
@@ -41,7 +41,7 @@ func (c *cumulativeErrorParser) parseFloat(s string) float64 {
 }
 
 func (c *cumulativeErrorParser) parseInt(s string) int {
-	if s == "" {
+	if s == "" || c.err != nil {
 		return 0
 	}
 	rv, err := strconv.ParseInt(s, 10, 64)
@@ -52,6 +52,9 @@ func (c *cumulativeErrorParser) parseInt(s string) int {
 }
 
 func (c *cumulativeErrorParser) parseDMS(s, ref string) float64 {
+	if c.err != nil {
+		return 0
+	}
 	n := 2
 	m := 1.0
 	if ref == "E" || ref == "W" {
