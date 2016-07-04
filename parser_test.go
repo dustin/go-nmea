@@ -117,7 +117,7 @@ func TestCumulativeErrorParser(t *testing.T) {
 		{"0", 0, false},
 		{"1.0", 1, false},
 		{"x", 0, true},
-		{"1.0", 1, true},
+		{"1.0", 0, true},
 	}
 
 	cp := &cumulativeErrorParser{}
@@ -139,7 +139,7 @@ func TestCumulativeErrorParser(t *testing.T) {
 		{"0", 0, false},
 		{"1", 1, false},
 		{"x", 0, true},
-		{"1", 1, true},
+		{"1", 0, true},
 	}
 
 	cp = &cumulativeErrorParser{}
