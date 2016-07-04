@@ -149,7 +149,7 @@ func vtgParser(parts []string, handler interface{}) error {
 	}
 
 	if len(parts) < 9 || parts[2] != "T" || parts[4] != "M" || parts[6] != "N" || parts[8] != "K" {
-		return fmt.Errorf("Unexpected VTG packet: %#v", parts)
+		return fmt.Errorf("unexpected VTG packet: %#v", parts)
 	}
 
 	cp := &cumulativeErrorParser{}
@@ -202,7 +202,7 @@ func ggaParser(parts []string, handler interface{}) error {
 	}
 
 	if len(parts) < 13 || parts[10] != "M" || parts[12] != "M" {
-		return fmt.Errorf("Unexpected GGA packet: %#v", parts)
+		return fmt.Errorf("unexpected GGA packet: %#v", parts)
 	}
 
 	t, err := time.Parse("150405 UTC", parts[1]+" UTC")
@@ -245,7 +245,7 @@ func gsaParser(parts []string, handler interface{}) error {
 	}
 
 	if len(parts) != 18 {
-		return fmt.Errorf("Unexpected GSA packet: %#v (len=%v)", parts, len(parts))
+		return fmt.Errorf("unexpected GSA packet: %#v (len=%v)", parts, len(parts))
 	}
 
 	cp := &cumulativeErrorParser{}
@@ -322,7 +322,7 @@ func zdaParser(parts []string, handler interface{}) error {
 	}
 
 	if len(parts) != 7 || len(parts[1]) < 6 {
-		return fmt.Errorf("Unexpected ZDA packet: %#v (len=%v)", parts, len(parts))
+		return fmt.Errorf("unexpected ZDA packet: %#v (len=%v)", parts, len(parts))
 	}
 
 	cp := &cumulativeErrorParser{}
