@@ -57,11 +57,18 @@ func (c *cumulativeErrorParser) parseDMS(s, ref string) float64 {
 	}
 	n := 2
 	m := 1.0
-	if ref == "E" || ref == "W" {
+	switch ref {
+	case "E":
 		n = 3
-	}
-	if ref == "S" || ref == "W" {
+	case "W":
+		n = 3
 		m = -1
+	case "S":
+		m = -1
+	case "N":
+	default:
+		c.err = errors.New("direction must be one of NESW")
+		return 0
 	}
 
 	deg := c.parseFloat(s[:n])

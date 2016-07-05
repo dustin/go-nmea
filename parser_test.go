@@ -153,6 +153,27 @@ func TestCumulativeErrorParser(t *testing.T) {
 		}
 	}
 
+	dtests := []struct {
+		ina, inb string
+		exp      float64
+		experr   bool
+	}{
+		{"3723.02837", "N", 37.383806166666666, false},
+		{"3723.02837", "W", -372.05047283333334, false},
+		{"3723.02837", "X", 0, true},
+		{"372X.02837", "N", 0, true},
+	}
+
+	cp = &cumulativeErrorParser{}
+	for _, test := range dtests {
+		got := cp.parseDMS(test.ina, test.inb)
+		if got != test.exp {
+			t.Errorf("On %q %q, expected %v, got %v", test.ina, test.inb, test.exp, got)
+		}
+		if (cp.err != nil) != test.experr {
+			t.Errorf("Expected error=%v  was %v", test.experr, cp.err)
+		}
+	}
 }
 
 // Validate type combinations as combined handlers.
