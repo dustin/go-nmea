@@ -158,7 +158,7 @@ func TestCumulativeErrorParser(t *testing.T) {
 		exp      float64
 		experr   bool
 	}{
-		{"3723.02837", "N", 37.383806166666666, false},
+		{"3723.02837", "S", 37.383806166666666, false},
 		{"3723.02837", "W", -372.05047283333334, false},
 		{"3723.02837", "X", 0, true},
 		{"372X.02837", "N", 0, true},
