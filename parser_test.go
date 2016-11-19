@@ -78,7 +78,12 @@ func TestGPSGSAFixString(t *testing.T) {
 
 func TestSampleParsing(t *testing.T) {
 	for _, s := range strings.Split(ubloxSample, "\n") {
-		parseMessage(s, nil)
+		if s == "" {
+			continue
+		}
+		if err := parseMessage(s, nil); err != nil {
+			t.Errorf("Error parsing %q:  %v", s, err)
+		}
 	}
 }
 
@@ -102,7 +107,9 @@ func ExampleProcess() {
 }
 
 func TestFreeNMEASampleProcessing(t *testing.T) {
-	err := Process(strings.NewReader(freeNmeaSample), nil, nil)
+	err := Process(strings.NewReader(freeNmeaSample), nil, func(s string, err error) error {
+		return fmt.Errorf("parsing %q: %v", s, err)
+	})
 	if err != nil {
 		t.Errorf("Unexpected error, got %v", err)
 	}
@@ -657,7 +664,7 @@ func TestGSVHandling(t *testing.T) {
 }
 
 func TestDefaultErrorHandler(t *testing.T) {
-	e := defaultErrorHandler(errors.New("x"))
+	e := defaultErrorHandler("doing x", errors.New("x"))
 	if e != nil {
 		t.Errorf("Expected error to be eaten by defaultHandler, got %v", e)
 	}
@@ -665,12 +672,12 @@ func TestDefaultErrorHandler(t *testing.T) {
 
 func TestNonDefaultErrorHandler(t *testing.T) {
 	h := &testUnion{}
-	err := Process(strings.NewReader(ubloxSample), h, func(e error) error { return e })
+	err := Process(strings.NewReader(ubloxSample), h, func(s string, e error) error { return e })
 	if err != nil {
 		t.Errorf("Unexpected no error, got %v", err)
 	}
 
-	err = Process(strings.NewReader(`$GPGSV,4,1,1`), h, func(e error) error { return e })
+	err = Process(strings.NewReader(`$GPGSV,4,1,1`), h, func(s string, e error) error { return e })
 	if err == nil {
 		t.Errorf("Expected error parsing junk, got nil")
 	}

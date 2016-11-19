@@ -487,9 +487,9 @@ func parseMessage(line string, handler interface{}) error {
 // ErrorHandler handles error in processing individual messages.  If
 // the error handler returns nil, the processor will keep executing,
 // else Process will return the error the ErrorHandler returned.
-type ErrorHandler func(err error) error
+type ErrorHandler func(s string, err error) error
 
-func defaultErrorHandler(err error) error {
+func defaultErrorHandler(s string, err error) error {
 	return nil
 }
 
@@ -510,7 +510,7 @@ func Process(r io.Reader, handler interface{}, errh ErrorHandler) error {
 	for s.Scan() {
 		err := parseMessage(s.Text(), handler)
 		if err != nil {
-			if e := errh(err); e != nil {
+			if e := errh(s.Text(), err); e != nil {
 				return e
 			}
 		}
