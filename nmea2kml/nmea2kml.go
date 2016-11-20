@@ -16,6 +16,7 @@ const kmlHeader = `<?xml version="1.0" encoding="UTF-8"?>
 const kmlPoint = `<Placemark>
   <TimeStamp>{{.TS}}</TimeStamp>
   <Point><coordinates>{{.Lon}},{{.Lat}}</coordinates></Point>
+  <gx:flyToMode>smooth</gx:flyToMode>
 </Placemark>
 `
 const kmlFooter = `</Folder></kml>`
