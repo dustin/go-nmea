@@ -16,15 +16,26 @@ const kmlHeader = `<?xml version="1.0" encoding="UTF-8"?>
 <kml xmlns="http://www.opengis.net/kml/2.2"
           xmlns:gx="http://www.google.com/kml/ext/2.2">
 
-<Folder>`
+<Folder>
+<gx:Tour><name>Road Trip</name><gx:Playlist>`
 const kmlPoint = `<!-- {{ .D }} -->
-<Placemark>
-  <TimeStamp>{{.TS}}</TimeStamp>
-  <Point><coordinates>{{.Lon}},{{.Lat}}</coordinates></Point>
-  <gx:flyToMode>smooth</gx:flyToMode>
-</Placemark>
+<gx:FlyTo>
+       <gx:duration>2</gx:duration>
+       <gx:flyToMode>smooth</gx:flyToMode>
+       <TimeStamp>{{.TS}}</TimeStamp>
+	<LookAt>
+		<longitude>{{.Lon}}</longitude>
+		<latitude>{{.Lat}}</latitude>
+		<altitude>20</altitude>
+		<heading>{{.H}}</heading>
+		<tilt>85</tilt>
+		<range>1237.092264232066</range>
+		<altitudeMode>relativeToGround</altitudeMode>
+	</LookAt>
+</gx:FlyTo>
+<gx:Wait><gx:duration>0</gx:duration></gx:Wait>
 `
-const kmlFooter = `</Folder></kml>`
+const kmlFooter = `</gx:Playlist></gx:Tour></Folder></kml>`
 
 const tsFormat = "2006-01-02T15:04:05Z"
 
@@ -69,7 +80,8 @@ func (k *kmlWriter) HandleRMC(m nmea.RMC) {
 			Lon, Lat float64
 			TS       string
 			D        float64
-		}{m.Longitude, m.Latitude, m.Timestamp.Format(tsFormat), Δλ})
+			H        float64
+		}{m.Longitude, m.Latitude, m.Timestamp.Format(tsFormat), Δλ, m.Angle})
 		k.plat = m.Latitude
 		k.plon = m.Longitude
 	}
@@ -100,9 +112,7 @@ func distance(lon1, lat1, lon2, lat2 float64) float64 {
 			math.Sin(Δλ/2)*math.Sin(Δλ/2)
 	c := 2 * math.Atan2(math.Sqrt(a), math.Sqrt(1-a))
 
-	rv := 6371000 * c
-	log.Printf("Distance from %v,%v to %v,%v is %v", lon1, lat1, lon2, lat2, rv)
-	return rv
+	return 6371000 * c
 }
 
 func main() {
@@ -119,5 +129,7 @@ func main() {
 	if err != nil {
 		log.Fatalf("Error processing stuff: %v", err)
 	}
-	h.Close()
+	if err := h.Close(); err != nil {
+		log.Fatalf("Error finishing up KML output: %v", err)
+	}
 }
