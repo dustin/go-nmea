@@ -72,8 +72,6 @@ func (k *kmlWriter) HandleRMC(m nmea.RMC) {
 		}{m.Longitude, m.Latitude, m.Timestamp.Format(tsFormat), Δλ})
 		k.plat = m.Latitude
 		k.plon = m.Longitude
-	} else {
-		log.Printf("%v,%v is too close to %v,%v (%v)", m.Longitude, m.Latitude, k.plon, k.plat, Δλ)
 	}
 }
 
