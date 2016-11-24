@@ -6,6 +6,7 @@ import (
 	"log"
 	"math"
 	"os"
+	"time"
 
 	"text/template"
 
@@ -20,7 +21,7 @@ const kmlHeader = `<?xml version="1.0" encoding="UTF-8"?>
 <gx:Tour><name>Road Trip</name><gx:Playlist>`
 const kmlPoint = `<!-- {{ .D }} -->
 <gx:FlyTo>
-       <gx:duration>2</gx:duration>
+       <gx:duration>1</gx:duration>
        <gx:flyToMode>smooth</gx:flyToMode>
        <TimeStamp>{{.TS}}</TimeStamp>
 	<LookAt>
@@ -28,8 +29,8 @@ const kmlPoint = `<!-- {{ .D }} -->
 		<latitude>{{.Lat}}</latitude>
 		<altitude>20</altitude>
 		<heading>{{.H}}</heading>
-		<tilt>85</tilt>
-		<range>1237.092264232066</range>
+		<tilt>{{.Tilt}}</tilt>
+		<range>{{.Range}}</range>
 		<altitudeMode>relativeToGround</altitudeMode>
 	</LookAt>
 </gx:FlyTo>
@@ -41,6 +42,9 @@ const tsFormat = "2006-01-02T15:04:05Z"
 
 var (
 	minDist = flag.Int("minDist", 1000, "minimum distance (meters) between points")
+	minTime = flag.Duration("minTime", 1*time.Minute, "minimum time between points")
+	tilt    = flag.Float64("tilt", 85, "viewing angle")
+	rng     = flag.Float64("range", 800, "viewing range")
 
 	tmpl = template.Must(template.New("").Parse(kmlPoint))
 )
@@ -71,19 +75,24 @@ func (e errRememberer) Close() error {
 type kmlWriter struct {
 	w          errRememberer
 	plat, plon float64
+	pts        time.Time
 }
 
 func (k *kmlWriter) HandleRMC(m nmea.RMC) {
 	Δλ := distance(m.Longitude, m.Latitude, k.plon, k.plat)
-	if Δλ > float64(*minDist) {
+	Δt := m.Timestamp.Sub(k.pts)
+	if Δλ > float64(*minDist) || Δt > *minTime {
 		tmpl.Execute(k.w, struct {
 			Lon, Lat float64
 			TS       string
 			D        float64
 			H        float64
-		}{m.Longitude, m.Latitude, m.Timestamp.Format(tsFormat), Δλ, m.Angle})
+			Tilt     float64
+			Range    float64
+		}{m.Longitude, m.Latitude, m.Timestamp.Format(tsFormat), Δλ, m.Angle, *tilt, *rng})
 		k.plat = m.Latitude
 		k.plon = m.Longitude
+		k.pts = m.Timestamp
 	}
 }
 
