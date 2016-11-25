@@ -27,7 +27,7 @@ const kmlPoint = `<!-- {{ .D }} -->
 	<LookAt>
 		<longitude>{{.Lon}}</longitude>
 		<latitude>{{.Lat}}</latitude>
-		<altitude>20</altitude>
+		<altitude>{{.Altitude}</altitude>
 		<heading>{{.H}}</heading>
 		<tilt>{{.Tilt}}</tilt>
 		<range>{{.Range}}</range>
@@ -45,6 +45,7 @@ var (
 	minTime = flag.Duration("minTime", 1*time.Minute, "minimum time between points")
 	tilt    = flag.Float64("tilt", 85, "viewing angle")
 	rng     = flag.Float64("range", 800, "viewing range")
+	alt     = flag.Float64("alt", 20, "altitude")
 
 	tmpl = template.Must(template.New("").Parse(kmlPoint))
 )
@@ -89,7 +90,8 @@ func (k *kmlWriter) HandleRMC(m nmea.RMC) {
 			H        float64
 			Tilt     float64
 			Range    float64
-		}{m.Longitude, m.Latitude, m.Timestamp.Format(tsFormat), Δλ, m.Angle, *tilt, *rng})
+			Altitude float64
+		}{m.Longitude, m.Latitude, m.Timestamp.Format(tsFormat), Δλ, m.Angle, *tilt, *rng, *alt})
 		k.plat = m.Latitude
 		k.plon = m.Longitude
 		k.pts = m.Timestamp
