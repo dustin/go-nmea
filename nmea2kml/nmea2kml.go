@@ -68,6 +68,7 @@ func (e errRememberer) Write(b []byte) (int, error) {
 
 func (e errRememberer) Close() error {
 	if e.err != nil {
+		e.w.Close()
 		return e.err
 	}
 	return e.w.Close()
