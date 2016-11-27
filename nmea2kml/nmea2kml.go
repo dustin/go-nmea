@@ -21,20 +21,20 @@ const kmlHeader = `<?xml version="1.0" encoding="UTF-8"?>
 <gx:Tour><name>Road Trip</name><gx:Playlist>`
 const kmlPoint = `<!-- {{ .D }} -->
 <gx:FlyTo>
-       <gx:duration>1</gx:duration>
+       <gx:duration>{{.FlyDur}}</gx:duration>
        <gx:flyToMode>smooth</gx:flyToMode>
        <TimeStamp>{{.TS}}</TimeStamp>
 	<LookAt>
 		<longitude>{{.Lon}}</longitude>
 		<latitude>{{.Lat}}</latitude>
-		<altitude>{{.Altitude}</altitude>
+		<altitude>{{.Altitude}}</altitude>
 		<heading>{{.H}}</heading>
 		<tilt>{{.Tilt}}</tilt>
 		<range>{{.Range}}</range>
 		<altitudeMode>relativeToGround</altitudeMode>
 	</LookAt>
 </gx:FlyTo>
-<gx:Wait><gx:duration>0</gx:duration></gx:Wait>
+<gx:Wait><gx:duration>{{.WaitDur}}</gx:duration></gx:Wait>
 `
 const kmlFooter = `</gx:Playlist></gx:Tour></Folder></kml>`
 
@@ -46,6 +46,8 @@ var (
 	tilt    = flag.Float64("tilt", 85, "viewing angle")
 	rng     = flag.Float64("range", 800, "viewing range")
 	alt     = flag.Float64("alt", 20, "altitude")
+	flyDur  = flag.Duration("flyDur", time.Second, "fly-to duration")
+	waitDur = flag.Duration("waitDur", 0, "wait duration")
 
 	tmpl = template.Must(template.New("").Parse(kmlPoint))
 )
@@ -92,7 +94,11 @@ func (k *kmlWriter) HandleRMC(m nmea.RMC) {
 			Tilt     float64
 			Range    float64
 			Altitude float64
-		}{m.Longitude, m.Latitude, m.Timestamp.Format(tsFormat), Δλ, m.Angle, *tilt, *rng, *alt})
+			FlyDur   float64
+			WaitDur  float64
+		}{m.Longitude, m.Latitude, m.Timestamp.Format(tsFormat), Δλ, m.Angle,
+			*tilt, *rng, *alt,
+			flyDur.Seconds(), waitDur.Seconds()})
 		k.plat = m.Latitude
 		k.plon = m.Longitude
 		k.pts = m.Timestamp
