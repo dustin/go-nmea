@@ -508,6 +508,9 @@ func Process(r io.Reader, handler interface{}, errh ErrorHandler) error {
 	}
 	s := bufio.NewScanner(r)
 	for s.Scan() {
+		if s.Text() == "" {
+			continue
+		}
 		err := parseMessage(s.Text(), handler)
 		if err != nil {
 			if e := errh(s.Text(), err); e != nil {

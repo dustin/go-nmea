@@ -142,7 +142,7 @@ func main() {
 	h := &kmlWriter{w: errRememberer{w: os.Stdout}}
 	h.Init()
 	err := nmea.Process(os.Stdin, h, func(s string, err error) error {
-		if s != "" && err != nil {
+		if err != nil {
 			log.Printf("On %q: %v", s, err)
 		}
 		return nil
