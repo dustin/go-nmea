@@ -2,6 +2,7 @@ package main
 
 import (
 	"flag"
+	"fmt"
 	"io"
 	"log"
 	"math"
@@ -18,7 +19,9 @@ const kmlHeader = `<?xml version="1.0" encoding="UTF-8"?>
           xmlns:gx="http://www.google.com/kml/ext/2.2">
 
 <Folder>
-<gx:Tour><name>Road Trip</name><gx:Playlist>`
+<gx:Tour><name>%s</name><gx:Playlist>
+`
+
 const kmlPoint = `<!-- {{ .D }} -->
 <gx:FlyTo>
        <gx:duration>{{.FlyDur}}</gx:duration>
@@ -48,6 +51,7 @@ var (
 	alt     = flag.Float64("alt", 20, "altitude")
 	flyDur  = flag.Duration("flyDur", time.Second, "fly-to duration")
 	waitDur = flag.Duration("waitDur", 0, "wait duration")
+	title   = flag.String("title", "Road Trip", "KML title")
 
 	tmpl = template.Must(template.New("").Parse(kmlPoint))
 )
@@ -106,7 +110,7 @@ func (k *kmlWriter) HandleRMC(m nmea.RMC) {
 }
 
 func (k kmlWriter) Init() error {
-	k.w.Write([]byte(kmlHeader))
+	fmt.Fprintf(k.w, kmlHeader, *title)
 	return k.w.err
 }
 
