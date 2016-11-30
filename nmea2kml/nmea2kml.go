@@ -18,28 +18,16 @@ const kmlHeader = `<?xml version="1.0" encoding="UTF-8"?>
 <kml xmlns="http://www.opengis.net/kml/2.2"
           xmlns:gx="http://www.google.com/kml/ext/2.2">
 
-<Folder>
-<gx:Tour><name>%s</name><gx:Playlist>
+<Document>
+<name>%s</name>
 `
 
-const kmlPoint = `<!-- {{ .D }} -->
-<gx:FlyTo>
-       <gx:duration>{{.FlyDur}}</gx:duration>
-       <gx:flyToMode>smooth</gx:flyToMode>
-       <TimeStamp>{{.TS}}</TimeStamp>
-	<LookAt>
-		<longitude>{{.Lon}}</longitude>
-		<latitude>{{.Lat}}</latitude>
-		<altitude>{{.Altitude}}</altitude>
-		<heading>{{.H}}</heading>
-		<tilt>{{.Tilt}}</tilt>
-		<range>{{.Range}}</range>
-		<altitudeMode>relativeToGround</altitudeMode>
-	</LookAt>
-</gx:FlyTo>
-<gx:Wait><gx:duration>{{.WaitDur}}</gx:duration></gx:Wait>
+const kmlPoint = `<Placemark>
+    <Point><coordinates>{{.Lon}},{{.Lat}},0.0</coordinates></Point>
+</Placemark>
 `
-const kmlFooter = `</gx:Playlist></gx:Tour></Folder></kml>`
+
+const kmlFooter = `</Document></kml>`
 
 const tsFormat = "2006-01-02T15:04:05Z"
 
@@ -86,27 +74,40 @@ type kmlWriter struct {
 	pts        time.Time
 }
 
+func (k *kmlWriter) render(m nmea.RMC, Δλ float64) {
+	tmpl.Execute(k.w, struct {
+		Lon, Lat float64
+		TS       string
+		D        float64
+		H        float64
+		Tilt     float64
+		Range    float64
+		Altitude float64
+		FlyDur   float64
+		WaitDur  float64
+	}{m.Longitude, m.Latitude, m.Timestamp.Format(tsFormat), Δλ, m.Angle,
+		*tilt, *rng, *alt,
+		flyDur.Seconds(), waitDur.Seconds()})
+}
+
 func (k *kmlWriter) HandleRMC(m nmea.RMC) {
-	Δλ := distance(m.Longitude, m.Latitude, k.plon, k.plat)
-	Δt := m.Timestamp.Sub(k.pts)
-	if Δλ > float64(*minDist) || Δt > *minTime {
-		tmpl.Execute(k.w, struct {
-			Lon, Lat float64
-			TS       string
-			D        float64
-			H        float64
-			Tilt     float64
-			Range    float64
-			Altitude float64
-			FlyDur   float64
-			WaitDur  float64
-		}{m.Longitude, m.Latitude, m.Timestamp.Format(tsFormat), Δλ, m.Angle,
-			*tilt, *rng, *alt,
-			flyDur.Seconds(), waitDur.Seconds()})
+	if k.plat == 0 {
+		k.render(m, 0)
 		k.plat = m.Latitude
 		k.plon = m.Longitude
 		k.pts = m.Timestamp
+		return
 	}
+	Δλ := distance(m.Longitude, m.Latitude, k.plon, k.plat)
+	Δt := m.Timestamp.Sub(k.pts)
+	if Δλ < float64(*minDist) && Δt > *minTime {
+		log.Printf("Δλ = %v, Δt = %v", Δλ, Δt)
+		k.render(m, Δλ)
+	} else {
+		k.plat = m.Latitude
+		k.plon = m.Longitude
+	}
+	k.pts = m.Timestamp
 }
 
 func (k kmlWriter) Init() error {
