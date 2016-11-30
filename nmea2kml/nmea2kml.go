@@ -23,6 +23,8 @@ const kmlHeader = `<?xml version="1.0" encoding="UTF-8"?>
 `
 
 const kmlPoint = `<Placemark>
+    <name>{{.TS}}</name>
+    <TimeStamp>{{.TS}}</TimeStamp>
     <Point><coordinates>{{.Lon}},{{.Lat}},0.0</coordinates></Point>
 </Placemark>
 `
