@@ -36,11 +36,6 @@ const tsFormat = "2006-01-02T15:04:05Z"
 var (
 	minDist = flag.Int("minDist", 1000, "minimum distance (meters) between points")
 	minTime = flag.Duration("minTime", 1*time.Minute, "minimum time between points")
-	tilt    = flag.Float64("tilt", 85, "viewing angle")
-	rng     = flag.Float64("range", 800, "viewing range")
-	alt     = flag.Float64("alt", 20, "altitude")
-	flyDur  = flag.Duration("flyDur", time.Second, "fly-to duration")
-	waitDur = flag.Duration("waitDur", 0, "wait duration")
 	title   = flag.String("title", "Road Trip", "KML title")
 
 	tmpl = template.Must(template.New("").Parse(kmlPoint))
@@ -82,14 +77,7 @@ func (k *kmlWriter) render(m nmea.RMC, Δλ float64) {
 		TS       string
 		D        float64
 		H        float64
-		Tilt     float64
-		Range    float64
-		Altitude float64
-		FlyDur   float64
-		WaitDur  float64
-	}{m.Longitude, m.Latitude, m.Timestamp.Format(tsFormat), Δλ, m.Angle,
-		*tilt, *rng, *alt,
-		flyDur.Seconds(), waitDur.Seconds()})
+	}{m.Longitude, m.Latitude, m.Timestamp.Format(tsFormat), Δλ, m.Angle})
 }
 
 func (k *kmlWriter) HandleRMC(m nmea.RMC) {
