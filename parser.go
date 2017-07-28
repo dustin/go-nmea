@@ -11,6 +11,9 @@ import (
 )
 
 var (
+	// ErrUnhandled is passed to the error handler for any message type unknown to this parser.
+	ErrUnhandled = errors.New("unhandled message type")
+
 	errBadChecksum = errors.New("bad checksum")
 	errShortMsg    = errors.New("short message")
 
@@ -480,6 +483,8 @@ func parseMessage(line string, handler interface{}) error {
 	var err error
 	if p, ok := parsers[parts[0]]; ok {
 		err = p(parts, handler)
+	} else {
+		return ErrUnhandled
 	}
 	return err
 }
