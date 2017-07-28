@@ -18,13 +18,13 @@ var (
 	errShortMsg    = errors.New("short message")
 
 	parsers = map[string]func([]string, interface{}) error{
-		"$GPRMC": rmcParser,
-		"$GPVTG": vtgParser,
-		"$GPGGA": ggaParser,
-		"$GPGSA": gsaParser,
-		"$GPGLL": gllParser,
-		"$GPZDA": zdaParser,
-		"$GPGSV": gsvParser,
+		"RMC": rmcParser,
+		"VTG": vtgParser,
+		"GGA": ggaParser,
+		"GSA": gsaParser,
+		"GLL": gllParser,
+		"ZDA": zdaParser,
+		"GSV": gsvParser,
 	}
 )
 
@@ -481,7 +481,7 @@ func parseMessage(line string, handler interface{}) error {
 	parts := strings.Split(line[:len(line)-3], ",")
 
 	var err error
-	if p, ok := parsers[parts[0]]; ok {
+	if p, ok := parsers[parts[0][3:]]; ok {
 		err = p(parts, handler)
 	} else {
 		return ErrUnhandled
